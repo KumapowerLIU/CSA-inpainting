@@ -9,10 +9,10 @@ The existing inpainting methods often generate contents with blurry textures and
 -------------
 
 ## Model Architecture
-<div align=center><img src="./model3.png" width="50%" height="50%" ></div>
+<div align=center><img src="./model3.png" width="15%" height="15%" ></div>
 
 ### CSA Architecture
-<div align=center><img src="./attention.jpg" width="50%" height="50%" ></div>
+<div align=center><img src="./block.jpg" width="50%" height="50%" ></div>
 
 ### Feature patch discriminator
 <div align=center><img src="./feature.jpg" width="50%" height="50%" ></div>
