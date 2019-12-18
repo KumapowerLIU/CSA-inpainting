@@ -4,15 +4,15 @@
 -----------
 ## Introduction
 The existing inpainting methods often generate contents with blurry textures and distorted structures due to the discontinuity of the local pixels.From a semantic-level perspective, the local pixel discontinuity is mainly because these methods ignore the semantic relevance and feature continuity of hole regions. To handle this problem, we investigate the human behavior in repairing pictures and propose a ﬁned deep generative model-based approach with a novel coherent semantic attention (CSA) layer, which can not only preserve contextual structure but also make more effective predictions of missing parts by modeling the semantic relevance between the holes features. Meanwhile, we further propose consistency loss and feature patch discriminator to stabilize the network training process and improve the details. 
-![show]()
+![show](./show.jpg)
 
 -------------
 ## Model Architecture
-![Arcticture]()
+![Arcticture](./model3.jpg)
 ### CSA Architecture
-![CSA]()
+![CSA](./attention.jpg)
 ### Feature patch discriminator
-![Feature patch]()
+![Feature patch](./feature.jpg)
 
 -------------
 
