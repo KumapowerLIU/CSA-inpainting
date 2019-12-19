@@ -55,7 +55,7 @@ Our model is trained on the irregular mask dataset provided by [Liu et al](https
 * Run test.ipynb
 
 ## License
-CC 4.0 Attribution-NonCommercial International
+CC 4.0 Attribution-NonCommercial International.
 The software is for educaitonal and academic research purpose only.
 
 ## <span id="jump1">Citation</span>
