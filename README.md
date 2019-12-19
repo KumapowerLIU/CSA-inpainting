@@ -9,7 +9,7 @@ The existing inpainting methods often generate contents with blurry textures and
 -------------
 
 ## Model Architecture
-<div align=center><img src="./model3.jpg" width="15%" height="15%" ></div>
+<div align=center><img src="./model3.jpg" width="70%" height="70%" ></div>
 
 ### CSA Architecture
 <div align=center><img src="./block.jpg" width="50%" height="50%" ></div>
