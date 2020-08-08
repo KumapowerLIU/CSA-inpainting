@@ -38,6 +38,14 @@ The existing inpainting methods often generate contents with blurry textures and
 
 * Install PyTorch and dependencies from http://pytorch.org
 
+* Or you can clone the repo and run by conda
+    ```
+    conda env create -f environment.yaml 
+    conda activate csa-inpainting
+    jupyter notebook
+    ```
+  Open the browser and enter the URL `http://localhost:8080` to enjoy jupyter notebook
+
 --------------
 
 ## Datasets
