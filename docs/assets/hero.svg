@@ -1,80 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" role="img" aria-labelledby="title description">
-  <title id="title">CSA — Coherent Semantic Attention</title>
-  <desc id="description">A modern PyTorch implementation of the ICCV 2019 image inpainting method. A schematic shows missing feature patches restored using known context and sequential coherence, followed by the two-stage pipeline.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title description">
+  <title id="title">The whole picture.</title>
+  <desc id="description">Conceptual artwork, not a model output. On the left, a missing square interrupts a field of contours. On the right, the contours continue across the whole field.</desc>
   <defs>
-    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
-      <path d="M32 0H0V32" fill="none" stroke="#dae5df" stroke-width="1"/>
-    </pattern>
-    <linearGradient id="background" x2="1" y2="1">
-      <stop stop-color="#f6f8f4"/><stop offset="1" stop-color="#e9f1ec"/>
-    </linearGradient>
-    <linearGradient id="patch" x2="1" y2="1">
-      <stop stop-color="#5ea49a"/><stop offset="1" stop-color="#1e6b66"/>
-    </linearGradient>
-    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
-      <path d="M1 1L7 4L1 7" fill="none" stroke="#507b71" stroke-width="1.4"/>
-    </marker>
+    <clipPath id="field">
+      <rect width="300" height="208" rx="8"/>
+    </clipPath>
+    <g id="contours" fill="none" stroke="#f5f5f7" stroke-width="2.5">
+      <path d="M-30 41C42-35 98 23 153 54S252 104 338 8"/>
+      <path d="M-30 59C42-17 98 41 153 72S252 122 338 26"/>
+      <path d="M-30 77C42 1 98 59 153 90S252 140 338 44"/>
+      <path d="M-30 95C42 19 98 77 153 108S252 158 338 62"/>
+      <path d="M-30 113C42 37 98 95 153 126S252 176 338 80"/>
+      <path d="M-30 131C42 55 98 113 153 144S252 194 338 98"/>
+      <path d="M-30 149C42 73 98 131 153 162S252 212 338 116"/>
+      <path d="M-30 167C42 91 98 149 153 180S252 230 338 134"/>
+      <path d="M-30 185C42 109 98 167 153 198S252 248 338 152"/>
+      <path d="M-30 203C42 127 98 185 153 216S252 266 338 170"/>
+    </g>
   </defs>
-  <rect x="1" y="1" width="1278" height="558" rx="24" fill="url(#background)" stroke="#d5e2d9"/>
-  <rect x="720" y="1" width="559" height="374" rx="24" fill="url(#grid)" opacity=".7"/>
-  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
-    <rect x="52" y="48" width="102" height="29" rx="14" fill="#174e47"/>
-    <text x="103" y="68" text-anchor="middle" fill="#f4f8f4" font-size="12" font-weight="600" letter-spacing="1.2">ICCV 2019</text>
-    <text x="170" y="68" fill="#537268" font-size="12" font-weight="600" letter-spacing="1.8">RESEARCH REIMPLEMENTATION</text>
-    <text x="48" y="180" font-size="100" font-weight="750" letter-spacing="-7" fill="#133f39">CSA</text>
-    <text x="53" y="233" font-size="31" font-weight="600" letter-spacing="-.8" fill="#234b43">Coherent Semantic Attention</text>
-    <text x="54" y="272" font-size="22" fill="#59736b">for Image Inpainting</text>
-    <text x="54" y="324" font-size="15" fill="#537268">Context provides the structure. Coherence connects the details.</text>
-    <g transform="translate(800 71)">
-      <rect width="320" height="240" rx="15" fill="#f9fbf7" stroke="#cadbd0" stroke-width="1.5"/>
-      <g fill="url(#patch)">
-        <rect x="17" y="17" width="62" height="62" rx="8"/>
-        <rect x="92" y="17" width="62" height="62" rx="8" opacity=".8"/>
-        <rect x="167" y="17" width="62" height="62" rx="8" opacity=".6"/>
-        <rect x="242" y="17" width="62" height="62" rx="8" opacity=".4"/>
-        <rect x="17" y="90" width="62" height="62" rx="8" opacity=".8"/>
-        <rect x="242" y="90" width="62" height="62" rx="8" opacity=".6"/>
-        <rect x="17" y="163" width="62" height="62" rx="8" opacity=".6"/>
-        <rect x="92" y="163" width="62" height="62" rx="8" opacity=".4"/>
-        <rect x="167" y="163" width="62" height="62" rx="8" opacity=".8"/>
-        <rect x="242" y="163" width="62" height="62" rx="8"/>
-      </g>
-      <rect x="92" y="90" width="62" height="62" rx="8" fill="#d3a46b"/>
-      <rect x="167" y="90" width="62" height="62" rx="8" fill="#e8d0ad" stroke="#bd8b50" stroke-dasharray="4 4"/>
-      <path d="M49 48C49 118 84 120 112 120" fill="none" stroke="#fafdf5" stroke-width="2.5" marker-end="url(#arrow)"/>
-      <path d="M130 121H193" fill="none" stroke="#6b573d" stroke-width="2.5" marker-end="url(#arrow)"/>
-      <text x="123" y="137" text-anchor="middle" font-size="10" font-weight="600" fill="#64482b">mᵢ₋₁</text>
-      <text x="198" y="137" text-anchor="middle" font-size="10" font-weight="600" fill="#64482b">mᵢ</text>
-      <circle cx="48" cy="48" r="5" fill="#f8fcf6"/>
-      <circle cx="123" cy="121" r="5" fill="#f8fcf6"/>
-      <circle cx="198" cy="121" r="5" fill="#7b603f"/>
-    </g>
-    <circle cx="825" cy="338" r="5" fill="#377e70"/>
-    <text x="839" y="343" font-size="12" fill="#537268">known context</text>
-    <circle cx="971" cy="338" r="5" fill="#c1945d"/>
-    <text x="985" y="343" font-size="12" fill="#537268">sequential generation</text>
-    <path d="M52 380H1228" stroke="#cfded3"/>
-    <text x="54" y="417" font-size="11" font-weight="600" fill="#648175" letter-spacing="2">TWO STAGES · ONE COHERENT RESULT</text>
-    <g fill="#f9fbf8" stroke="#c8dbce">
-      <rect x="54" y="443" width="227" height="67" rx="11"/>
-      <rect x="362" y="443" width="227" height="67" rx="11"/>
-      <rect x="670" y="443" width="227" height="67" rx="11" fill="#174e47" stroke="#174e47"/>
-      <rect x="978" y="443" width="247" height="67" rx="11"/>
-    </g>
-    <g fill="none" stroke="#507b71" stroke-width="1.7" marker-end="url(#arrow)">
-      <path d="M297 477H345"/><path d="M605 477H653"/><path d="M913 477H961"/>
-    </g>
-    <g font-size="16" font-weight="600" text-anchor="middle">
-      <text x="167" y="471" fill="#264f44">Masked image</text>
-      <text x="475" y="471" fill="#264f44">Rough prediction</text>
-      <text x="783" y="471" fill="#f5faf4">Refinement + CSA</text>
-      <text x="1101" y="471" fill="#264f44">Completed image</text>
-    </g>
-    <g font-size="11" text-anchor="middle">
-      <text x="167" y="492" fill="#6b8276">independent masks per sample</text>
-      <text x="475" y="492" fill="#6b8276">global structure</text>
-      <text x="783" y="492" fill="#b9d9c8">context search + recurrent synthesis</text>
-      <text x="1101" y="492" fill="#6b8276">known pixels preserved</text>
-    </g>
+  <rect width="1200" height="500" fill="#f5f5f7"/>
+  <text x="600" y="135" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="94" font-weight="600" letter-spacing="-4.5" fill="#1d1d1f">The whole picture.</text>
+  <g transform="translate(204 218)" clip-path="url(#field)">
+    <rect width="300" height="208" fill="#1d1d1f"/>
+    <use href="#contours"/>
+    <rect x="105" y="57" width="94" height="94" fill="#f5f5f7"/>
+    <rect x="112" y="64" width="80" height="80" fill="none" stroke="#86868b" stroke-width="1.5" stroke-dasharray="4 5"/>
+  </g>
+  <path d="M571 322H629M617 310L629 322L617 334" fill="none" stroke="#86868b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(696 218)" clip-path="url(#field)">
+    <rect width="300" height="208" fill="#1d1d1f"/>
+    <use href="#contours"/>
   </g>
 </svg>

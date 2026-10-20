@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-labelledby="title description">
+  <title id="title">The whole picture.</title>
+  <desc id="description">Conceptual artwork, not a model output. On the left, a missing square interrupts a field of contours. On the right, the contours continue across the whole field.</desc>
+  <defs>
+    <clipPath id="field">
+      <rect width="300" height="208" rx="8"/>
+    </clipPath>
+    <g id="contours" fill="none" stroke="#1d1d1f" stroke-width="2.5">
+      <path d="M-30 41C42-35 98 23 153 54S252 104 338 8"/>
+      <path d="M-30 59C42-17 98 41 153 72S252 122 338 26"/>
+      <path d="M-30 77C42 1 98 59 153 90S252 140 338 44"/>
+      <path d="M-30 95C42 19 98 77 153 108S252 158 338 62"/>
+      <path d="M-30 113C42 37 98 95 153 126S252 176 338 80"/>
+      <path d="M-30 131C42 55 98 113 153 144S252 194 338 98"/>
+      <path d="M-30 149C42 73 98 131 153 162S252 212 338 116"/>
+      <path d="M-30 167C42 91 98 149 153 180S252 230 338 134"/>
+      <path d="M-30 185C42 109 98 167 153 198S252 248 338 152"/>
+      <path d="M-30 203C42 127 98 185 153 216S252 266 338 170"/>
+    </g>
+  </defs>
+  <rect width="1200" height="500" fill="#1d1d1f"/>
+  <text x="600" y="135" text-anchor="middle" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="94" font-weight="600" letter-spacing="-4.5" fill="#f5f5f7">The whole picture.</text>
+  <g transform="translate(204 218)" clip-path="url(#field)">
+    <rect width="300" height="208" fill="#f5f5f7"/>
+    <use href="#contours"/>
+    <rect x="105" y="57" width="94" height="94" fill="#1d1d1f"/>
+    <rect x="112" y="64" width="80" height="80" fill="none" stroke="#a1a1a6" stroke-width="1.5" stroke-dasharray="4 5"/>
+  </g>
+  <path d="M571 322H629M617 310L629 322L617 334" fill="none" stroke="#a1a1a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g transform="translate(696 218)" clip-path="url(#field)">
+    <rect width="300" height="208" fill="#f5f5f7"/>
+    <use href="#contours"/>
+  </g>
+</svg>

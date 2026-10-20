@@ -1,79 +1,91 @@
-<div align="center">
+<!-- Visual reference: https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/apple/DESIGN.md
+     Adapted to GitHub Markdown with local SVG artwork and native, selectable text. -->
 
-# CSA Inpainting
+<br>
 
-### Coherent Semantic Attention for Image Inpainting
+<p align="center"><sub>ICCV 2019 · MODERN PYTORCH REIMPLEMENTATION</sub></p>
 
-**ICCV 2019 · A modern PyTorch reimplementation**
+<h1 align="center">CSA Inpainting</h1>
 
-Hongyu Liu · Bin Jiang · Yi Xiao · Chao Yang
+<p align="center">
+  Coherent Semantic Attention for Image Inpainting<br>
+  <sub>Hongyu Liu · Bin Jiang · Yi Xiao · Chao Yang</sub>
+</p>
 
-[![Paper](https://img.shields.io/badge/ICCV-2019-375B88?style=flat-square)](https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.14.1-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)](pyproject.toml)
-[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)](pyproject.toml)
-[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-6A7687?style=flat-square)](LICENSE.md)
+<p align="center">
+  <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html">Paper ↗</a>
+  &nbsp; · &nbsp;
+  <a href="#quick-start">Quick start ↓</a>
+  &nbsp; · &nbsp;
+  <a href="docs/USAGE.md">中文指南 ↗</a>
+</p>
 
-[Paper](https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html)
-&nbsp; / &nbsp;
-[Original implementation](https://github.com/KumapowerLIU/CSA-inpainting)
-&nbsp; / &nbsp;
-[中文使用指南](docs/USAGE.md)
-&nbsp; / &nbsp;
-[Implementation notes](docs/MIGRATION.md)
-&nbsp; / &nbsp;
-[Validation](docs/VALIDATION.md)
+<br>
 
-<img src="docs/assets/hero.svg" alt="CSA inpainting: rough prediction, coherent semantic attention, and refinement" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.svg">
+  <img src="docs/assets/hero.svg" alt="The whole picture. A conceptual illustration of interrupted contours becoming continuous through inpainting." width="100%">
+</picture>
 
-</div>
+<p align="center"><sub>Context search. Coherent generation. Image refinement. · Conceptual illustration.</sub></p>
 
-Revisiting the original two-stage inpainting model with explicit network modules, native autograd, independent masks for every sample, and reproducible command-line experiments.
+<br>
 
-> [!NOTE]
-> This rewrite has passed software and gradient checks, including batched updates on CPU and Apple MPS. Dataset training and paper-metric reproduction are still pending. Numerical and gradient corrections are documented in the [migration notes](docs/MIGRATION.md).
+The original two-stage inpainting method, rebuilt as a focused Python package. Independent masks for every sample. Native autograd throughout. One command-line interface for training, evaluation, and inference.
 
-## The method
+**Research status.** Software and gradient checks pass, including batched CPU and Apple MPS updates. Dataset training and reproduction of the paper's metrics are still pending. [See the validation record →](docs/VALIDATION.md)
 
-**Search for context. Generate with continuity.**
-
-The rough U-Net first predicts missing content. The refinement U-Net applies CSA at one-eighth resolution: each missing feature finds a matching known feature, then incorporates the preceding generated feature. VGG consistency supervision and image/feature discriminators guide the result.
-
-<div align="center">
-  <img src="docs/assets/paper-results.jpg" alt="Original CSA examples with Input, Result, and Ground Truth columns" width="880">
-  <p><sub>Qualitative examples from the original 2019 repository. These are historical results, not outputs produced by this rewrite.</sub></p>
-</div>
-
-## The implementation
-
-| Research component | Current implementation |
-| :--- | :--- |
-| **Two-stage generation** | Explicit rough/refinement U-Nets, typed outputs, end-to-end gradients |
-| **Coherent attention** | Per-sample masks, chunked cosine search, differentiable recurrence |
-| **Training objective** | Reconstruction, masked VGG consistency, image and feature RaLSGAN losses |
-| **Experiment configuration** | Validated dataclasses, YAML, overrides, dry runs, source/environment records |
-| **Resuming experiments** | Model, Adam, scheduler, AMP scaler, epoch, step, and RNG state |
-| **Device support** | CPU, CUDA, Apple MPS; CUDA `torch.amp` with fp32 CSA computation |
-| **Verification** | Independent numerical reference, gradient checks, batch isolation, CLI integration |
-
-Every workflow runs through the `csa` command. The active package has no dependency on the archived implementation.
+<br>
 
 ## Quick start
 
-From the repository root, with [uv](https://docs.astral.sh/uv/getting-started/installation/) installed:
+With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run these commands from the repository root:
 
 ```bash
 uv sync --locked --extra dev
 uv run --locked csa smoke --device cpu --batch-size 2 --steps 2
-uv run --locked --extra dev pytest -q
 ```
 
-The smoke check runs two optimizer steps and verifies a checkpoint round trip. It uses a small synthetic fixture and does not download datasets or VGG weights.
+`uv sync` creates an isolated environment and installs the locked dependencies. The smoke check runs two optimizer steps and verifies checkpoint restoration using synthetic inputs, without downloading datasets or VGG weights.
 
-Python 3.13 is the project default; Python 3.11+ is supported. PyTorch **2.14.1** and torchvision **0.29.1** are pinned. See the [installation guide](docs/USAGE.md#安装环境) for pip and CUDA setup.
+**Python 3.13** by default, with 3.11+ supported. **PyTorch 2.14.1** and **torchvision 0.29.1** pinned.
 
-## Run an experiment
+[pip & CUDA installation →](docs/USAGE.md#安装环境) &nbsp; · &nbsp; [Default configuration →](configs/default.yaml)
 
-Start from [`configs/default.yaml`](configs/default.yaml). Inspect a configuration before allocating a model or loading data:
+<br>
+
+## Context becomes continuity.
+
+The rough U-Net predicts the missing structure. The refinement U-Net applies CSA at one-eighth resolution: each missing feature retrieves a matching known feature, then incorporates the preceding generated feature. VGG consistency supervision and image/feature discriminators guide the result.
+
+<br>
+
+<p align="center">
+  <img src="docs/assets/paper-results.jpg" alt="Historical 2019 results: paired groups of Input, Result, and Ground Truth for buildings, faces, and landscapes." width="880">
+</p>
+
+<p align="center">
+  <sub>Original 2019 results · Input / Result / Ground Truth<br>
+  These examples come from the historical repository. They were not produced by this rewrite.</sub>
+</p>
+
+<br>
+
+## Built for experiments.
+
+**Independent samples.** Each sample has its own mask. Cosine search is chunked, and the coherent generation recurrence remains differentiable.
+
+**Every run has a record.** Typed configuration, YAML overrides, dry runs, and source/environment records make experiment settings inspectable.
+
+**Resume with the full state.** Checkpoints include the model, Adam optimizer, scheduler, AMP scaler, epoch, step, and RNG state. Resuming is supported at epoch boundaries.
+
+**Choose your device.** CPU, CUDA, and Apple MPS are supported in code. CUDA uses `torch.amp` with fp32 CSA computation; hardware validation is pending.
+
+<br>
+
+## One interface. Every workflow.
+
+Preview an experiment before allocating a model or loading data:
 
 ```bash
 uv run --locked csa train --config configs/default.yaml \
@@ -81,12 +93,16 @@ uv run --locked csa train --config configs/default.yaml \
   --dry-run
 ```
 
-Once data paths are configured:
+Set your data paths in [`configs/default.yaml`](configs/default.yaml), then train:
 
 ```bash
-# Train
 uv run --locked csa train --config configs/default.yaml
+```
 
+<details>
+<summary><strong>Resume, evaluate, and inpaint</strong></summary>
+
+```bash
 # Resume at an epoch boundary
 uv run --locked csa train --config configs/default.yaml \
   --resume runs/csa/latest.pt
@@ -102,26 +118,39 @@ uv run --locked csa infer --checkpoint runs/csa/latest.pt \
   --output runs/result.png
 ```
 
-**Mask convention:** white / `1` means missing. Masks have shape `B × 1 × H × W`, with one independent mask per sample. Inference preserves the input dimensions and known pixels.
+</details>
 
-Training uses ImageNet-pretrained VGG16. Full training, data conventions, output files, and evaluation definitions are covered in the [usage guide](docs/USAGE.md).
+**Mask convention:** white / `1` means missing. Masks have shape `B × 1 × H × W`, with one independent mask per sample. Inference preserves input dimensions and known pixels. Training uses ImageNet-pretrained VGG16.
 
-## Verification status
+[Full usage guide →](docs/USAGE.md) &nbsp; · &nbsp; [Numerical and gradient changes →](docs/MIGRATION.md)
 
-| Scope | Evidence |
+<br>
+
+## Validation
+
+| Check | Evidence |
 | :--- | :--- |
-| CSA mathematics | Independent NumPy oracle and float64 numerical gradient checks |
-| Batching | Different masks; batch outputs and gradients checked against individual calls |
-| CPU / Apple MPS | Batch-2 optimizer updates and exact checkpoint output round trips |
-| Full default architecture | CPU, 256 × 256, batch 2, one complete D/G update |
-| CUDA / mixed precision | Tests provided; hardware validation pending |
-| Dataset quality / paper metrics | Not yet evaluated |
+| CSA mathematics | Independent NumPy reference and float64 numerical gradient checks |
+| Batch isolation | Outputs and gradients compared with individual calls using different masks |
+| CPU & Apple MPS | Batch-2 optimizer updates and exact checkpoint output round trips |
+| Full architecture | CPU · 256 × 256 · batch 2 · one complete discriminator/generator update |
+| CUDA & mixed precision | Tests provided; hardware validation pending |
+| Dataset quality & paper metrics | Not yet evaluated |
 
-The full-architecture software check uses randomly initialized VGG weights. It validates the execution path, not feature quality or convergence. Detailed results are in the [validation record](docs/VALIDATION.md).
+```bash
+uv run --locked --extra dev pytest -q
+```
 
-CSA generation remains a sequential recurrence. This version does not claim optimal GPU throughput, DDP support, or compatibility with legacy checkpoints. See the [engineering principles](docs/DESIGN.md) and [method changes](docs/MIGRATION.md) before comparing reproduction results.
+The full-architecture check uses randomly initialized VGG weights to verify execution. It does not establish feature quality or convergence. CSA generation remains sequential; optimal GPU throughput, DDP, and legacy checkpoint compatibility are not claimed.
 
-## Explore the code
+[Validation details →](docs/VALIDATION.md) &nbsp; · &nbsp; [Engineering decisions →](docs/DESIGN.md)
+
+<br>
+
+## Explore the implementation
+
+<details>
+<summary><strong>A small package, with explicit responsibilities</strong></summary>
 
 ```text
 src/csa_inpainting/
@@ -143,6 +172,14 @@ docs/                Guides, design decisions, verification
 legacy/              Historical Python reference
 ```
 
+The active package runs independently of the archived implementation.
+
+</details>
+
+[Source code →](src/csa_inpainting) &nbsp; · &nbsp; [Tests →](tests) &nbsp; · &nbsp; [Historical implementation →](legacy)
+
+<br>
+
 ## Citation
 
 ```bibtex
@@ -155,4 +192,6 @@ legacy/              Historical Python reference
 }
 ```
 
-This project retains the original **CC BY-NC 4.0** notice for educational and academic research use. See [LICENSE.md](LICENSE.md). The historical implementation is based on commit [`f0b0712`](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2).
+<br>
+
+This project retains the original [CC BY-NC 4.0 notice](LICENSE.md) for educational and academic research use. The historical implementation is based on commit [`f0b0712`](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2).
