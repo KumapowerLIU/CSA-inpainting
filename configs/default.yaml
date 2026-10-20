@@ -1,0 +1,34 @@
+# Paper loss ratios; all paths are relative to the command's working directory.
+model:
+  width: 64
+  depth: 8
+  attention_chunk_size: 256
+  mask_threshold: 0.3125
+data:
+  train_images: ""
+  val_images: ""
+  train_masks: ""
+  val_masks: ""
+  mask_mode: center  # center | files | brush (synthetic, not the paper benchmark)
+  mask_white_is_hole: true
+  image_size: 256
+  center_overlap: 4  # released notebook: 120x120 hole; set 0 for 128x128
+  horizontal_flip: true
+  batch_size: 1      # change to 2, 4, ...; every sample has its own mask
+  workers: 4
+train:
+  output: runs/csa
+  device: auto
+  seed: 2019
+  epochs: 120
+  decay_start: 20
+  lr: 0.0002
+  beta1: 0.5
+  beta2: 0.999
+  reconstruction_weight: 1.0
+  consistency_weight: 0.01
+  adversarial_weight: 0.002
+  discriminator_width: 64
+  feature_discriminator_width: 512
+  amp: "off"  # CUDA only: fp16 or bf16; CSA scores/recurrence remain fp32
+  log_every: 50

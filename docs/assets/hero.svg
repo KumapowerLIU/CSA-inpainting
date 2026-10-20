@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="560" viewBox="0 0 1280 560" role="img" aria-labelledby="title description">
+  <title id="title">CSA — Coherent Semantic Attention</title>
+  <desc id="description">A modern PyTorch implementation of the ICCV 2019 image inpainting method. A schematic shows missing feature patches restored using known context and sequential coherence, followed by the two-stage pipeline.</desc>
+  <defs>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#dae5df" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#f6f8f4"/><stop offset="1" stop-color="#e9f1ec"/>
+    </linearGradient>
+    <linearGradient id="patch" x2="1" y2="1">
+      <stop stop-color="#5ea49a"/><stop offset="1" stop-color="#1e6b66"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M1 1L7 4L1 7" fill="none" stroke="#507b71" stroke-width="1.4"/>
+    </marker>
+  </defs>
+  <rect x="1" y="1" width="1278" height="558" rx="24" fill="url(#background)" stroke="#d5e2d9"/>
+  <rect x="720" y="1" width="559" height="374" rx="24" fill="url(#grid)" opacity=".7"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif">
+    <rect x="52" y="48" width="102" height="29" rx="14" fill="#174e47"/>
+    <text x="103" y="68" text-anchor="middle" fill="#f4f8f4" font-size="12" font-weight="600" letter-spacing="1.2">ICCV 2019</text>
+    <text x="170" y="68" fill="#537268" font-size="12" font-weight="600" letter-spacing="1.8">RESEARCH REIMPLEMENTATION</text>
+    <text x="48" y="180" font-size="100" font-weight="750" letter-spacing="-7" fill="#133f39">CSA</text>
+    <text x="53" y="233" font-size="31" font-weight="600" letter-spacing="-.8" fill="#234b43">Coherent Semantic Attention</text>
+    <text x="54" y="272" font-size="22" fill="#59736b">for Image Inpainting</text>
+    <text x="54" y="324" font-size="15" fill="#537268">Context provides the structure. Coherence connects the details.</text>
+    <g transform="translate(800 71)">
+      <rect width="320" height="240" rx="15" fill="#f9fbf7" stroke="#cadbd0" stroke-width="1.5"/>
+      <g fill="url(#patch)">
+        <rect x="17" y="17" width="62" height="62" rx="8"/>
+        <rect x="92" y="17" width="62" height="62" rx="8" opacity=".8"/>
+        <rect x="167" y="17" width="62" height="62" rx="8" opacity=".6"/>
+        <rect x="242" y="17" width="62" height="62" rx="8" opacity=".4"/>
+        <rect x="17" y="90" width="62" height="62" rx="8" opacity=".8"/>
+        <rect x="242" y="90" width="62" height="62" rx="8" opacity=".6"/>
+        <rect x="17" y="163" width="62" height="62" rx="8" opacity=".6"/>
+        <rect x="92" y="163" width="62" height="62" rx="8" opacity=".4"/>
+        <rect x="167" y="163" width="62" height="62" rx="8" opacity=".8"/>
+        <rect x="242" y="163" width="62" height="62" rx="8"/>
+      </g>
+      <rect x="92" y="90" width="62" height="62" rx="8" fill="#d3a46b"/>
+      <rect x="167" y="90" width="62" height="62" rx="8" fill="#e8d0ad" stroke="#bd8b50" stroke-dasharray="4 4"/>
+      <path d="M49 48C49 118 84 120 112 120" fill="none" stroke="#fafdf5" stroke-width="2.5" marker-end="url(#arrow)"/>
+      <path d="M130 121H193" fill="none" stroke="#6b573d" stroke-width="2.5" marker-end="url(#arrow)"/>
+      <text x="123" y="137" text-anchor="middle" font-size="10" font-weight="600" fill="#64482b">mᵢ₋₁</text>
+      <text x="198" y="137" text-anchor="middle" font-size="10" font-weight="600" fill="#64482b">mᵢ</text>
+      <circle cx="48" cy="48" r="5" fill="#f8fcf6"/>
+      <circle cx="123" cy="121" r="5" fill="#f8fcf6"/>
+      <circle cx="198" cy="121" r="5" fill="#7b603f"/>
+    </g>
+    <circle cx="825" cy="338" r="5" fill="#377e70"/>
+    <text x="839" y="343" font-size="12" fill="#537268">known context</text>
+    <circle cx="971" cy="338" r="5" fill="#c1945d"/>
+    <text x="985" y="343" font-size="12" fill="#537268">sequential generation</text>
+    <path d="M52 380H1228" stroke="#cfded3"/>
+    <text x="54" y="417" font-size="11" font-weight="600" fill="#648175" letter-spacing="2">TWO STAGES · ONE COHERENT RESULT</text>
+    <g fill="#f9fbf8" stroke="#c8dbce">
+      <rect x="54" y="443" width="227" height="67" rx="11"/>
+      <rect x="362" y="443" width="227" height="67" rx="11"/>
+      <rect x="670" y="443" width="227" height="67" rx="11" fill="#174e47" stroke="#174e47"/>
+      <rect x="978" y="443" width="247" height="67" rx="11"/>
+    </g>
+    <g fill="none" stroke="#507b71" stroke-width="1.7" marker-end="url(#arrow)">
+      <path d="M297 477H345"/><path d="M605 477H653"/><path d="M913 477H961"/>
+    </g>
+    <g font-size="16" font-weight="600" text-anchor="middle">
+      <text x="167" y="471" fill="#264f44">Masked image</text>
+      <text x="475" y="471" fill="#264f44">Rough prediction</text>
+      <text x="783" y="471" fill="#f5faf4">Refinement + CSA</text>
+      <text x="1101" y="471" fill="#264f44">Completed image</text>
+    </g>
+    <g font-size="11" text-anchor="middle">
+      <text x="167" y="492" fill="#6b8276">independent masks per sample</text>
+      <text x="475" y="492" fill="#6b8276">global structure</text>
+      <text x="783" y="492" fill="#b9d9c8">context search + recurrent synthesis</text>
+      <text x="1101" y="492" fill="#6b8276">known pixels preserved</text>
+    </g>
+  </g>
+</svg>

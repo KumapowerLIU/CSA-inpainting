@@ -1,0 +1,68 @@
+{
+  "cpu_smoke": {
+    "purpose": "Synthetic software smoke test; NOT a trained inpainting result",
+    "torch": "2.14.1",
+    "device": "cpu",
+    "batch_size": 2,
+    "steps": 2,
+    "checkpoint_roundtrip_exact": true,
+    "losses": {
+      "generator": 1.004926323890686,
+      "discriminator": 1.048743486404419,
+      "reconstruction": 0.9967242479324341,
+      "consistency": 0.38713642954826355,
+      "adversarial_image": 1.1153991222381592,
+      "adversarial_feature": 1.0499999523162842
+    }
+  },
+  "mps_smoke": {
+    "purpose": "Synthetic software smoke test; NOT a trained inpainting result",
+    "torch": "2.14.1",
+    "device": "mps",
+    "batch_size": 2,
+    "steps": 2,
+    "checkpoint_roundtrip_exact": true,
+    "losses": {
+      "generator": 1.004926323890686,
+      "discriminator": 1.0487464666366577,
+      "reconstruction": 0.9967242479324341,
+      "consistency": 0.38713538646698,
+      "adversarial_image": 1.1153926849365234,
+      "adversarial_feature": 1.0499998331069946
+    }
+  },
+  "full_default_cpu": {
+    "purpose": "Full-size software integration only; random VGG, not training-quality validation",
+    "torch": "2.14.1",
+    "feature_mode": "random_vgg_diagnostic",
+    "device": "cpu",
+    "batch_size": 2,
+    "image_size": 256,
+    "generator_parameters": 132111750,
+    "seconds": 5.386821957989014,
+    "losses": {
+      "generator": 1.0927537679672241,
+      "discriminator": 2.1913602352142334,
+      "reconstruction": 1.0796468257904053,
+      "consistency": 0.3804503381252289,
+      "adversarial_image": 2.8685083389282227,
+      "adversarial_feature": 1.782712697982788
+    }
+  },
+  "pytest": {
+    "passed": 42,
+    "skipped": 2,
+    "skip_reason": "CUDA GPU unavailable"
+  },
+  "documentation": {
+    "local_links_checked": true,
+    "chromium_preview_inspected": true,
+    "source_notebooks_remaining": 0,
+    "legacy_bytecode_remaining": 0
+  },
+  "environment": {
+    "lockfile": "uv.lock",
+    "locked_sync_verified": true,
+    "dependency_check_passed": true
+  }
+}
