@@ -32,7 +32,7 @@ curl -fL https://huggingface.co/KumaPower/CSA/resolve/main/csa-stage2-step97397.
   -o checkpoints/csa-stage2-step97397.pt
 ```
 
-See [CHECKPOINTS.md](CHECKPOINTS.md) for its SHA-256 and provenance. To use the model without a source checkout, the [Hugging Face model card](https://huggingface.co/KumaPower/CSA#files-and-inference) provides wheel installation and example-image download commands.
+See [CHECKPOINTS.md](CHECKPOINTS.md) for its SHA-256 and provenance. To use the model without a source checkout, the [Hugging Face model card](https://huggingface.co/KumaPower/CSA#try-the-checkpoint) provides wheel installation and example-image download commands.
 
 ## Inpaint one image
 

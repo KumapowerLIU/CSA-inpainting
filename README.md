@@ -31,10 +31,10 @@ This branch updates the 2019 implementation and training recipe. See [what chang
 ## How it works
 
 <p align="center">
-  <img src="docs/assets/csa-pipeline.png" alt="Modern CSA workflow: a rough U-Net produces a coarse composite, then CSA refinement uses that composite and the masked input to fill the hole. Known pixels are preserved. Train rough first, then freeze it while training refinement." width="960">
+  <img src="docs/assets/csa-pipeline-paper.png" alt="CSA architecture: a gray rough U-Net feeds a red-and-blue refinement encoder-decoder, with the yellow CSA module at 32 by 32 encoder resolution. Dashed lines are skip connections; the masked input also enters refinement, and final compositing preserves known pixels." width="960">
 </p>
 
-**Train rough prediction first, then freeze it and train refinement.** CSA refinement receives the coarse completion and the masked image; final compositing preserves known pixels. The diagram summarizes the modern implementation.
+**Train rough prediction first, then freeze it and train refinement.** CSA operates on 32 × 32 encoder features at the 256 × 256 training resolution. The diagram follows the visual layout of Figure 2 in the paper and shows the modern training recipe. [Editable SVG](docs/assets/csa-pipeline-paper.svg).
 
 ## Try the checkpoint
 
