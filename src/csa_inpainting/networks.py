@@ -1,4 +1,4 @@
-"""Explicit encoder/decoder networks matching the released CSA topology."""
+"""Explicit CSA encoder/decoders; released-code differences are in MIGRATION.md."""
 
 from dataclasses import dataclass
 
@@ -92,6 +92,9 @@ class RefinementNetwork(nn.Module):
         )
         self.bottleneck = nn.Sequential(
             nn.LeakyReLU(0.2),
+            # Modern checkpoints use a dense bottleneck. The released code used
+            # dilation=2/padding=3 here; do not silently change existing weights'
+            # sampling geometry (identical parameter shapes hide that change).
             nn.Conv2d(channels[-1], channels[-1], 4, 2, 1),
             nn.ReLU(),
             nn.ConvTranspose2d(channels[-1], channels[-1], 4, 2, 1),
@@ -165,7 +168,10 @@ class InpaintingModel(nn.Module):
         latent_mask = feature_mask(mask, threshold=self.mask_threshold)
         masked = torch.where(mask, self.fill.to(image.dtype), image)
         rough = self.rough(masked)
-        composite = torch.where(mask, rough, image)
+        # Match the released training graph: rough is supervised by its own L1,
+        # while refinement receives a fixed rough prediction for this batch.
+        # Explicit detach preserves that boundary without legacy .data mutation.
+        composite = torch.where(mask, rough.detach(), image)
         refined, encoder, decoder = self.refine(torch.cat((composite, masked), dim=1), latent_mask)
         return InpaintingOutput(
             masked,
@@ -223,13 +229,19 @@ class VGGFeatures(nn.Module):
         self.requires_grad_(False)
         self.eval()
 
-    def forward(self, image: Tensor) -> dict[str, Tensor]:
+    def forward(self, image: Tensor, *, pool3_only: bool = False) -> dict[str, Tensor]:
         x = ((image + 1) / 2 - self.mean) / self.std
         output = {}
         for i, layer in enumerate(self.layers):
             x = layer(x)
             if i == 16:
                 output["pool3"] = x
+                if pool3_only:
+                    return output
             elif i == 22:
                 output["relu4_3"] = x
         return output
+
+    def pool3_features(self, image: Tensor) -> Tensor:
+        """Feature-GAN fake inputs need no relu4_3 activations or computation."""
+        return self(image, pool3_only=True)["pool3"]

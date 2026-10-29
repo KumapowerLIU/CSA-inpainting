@@ -4,7 +4,7 @@ import hashlib
 import json
 import platform
 import subprocess
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from importlib.metadata import version
 from pathlib import Path
 from typing import Any
@@ -63,7 +63,8 @@ def record_invocation(
     except (OSError, subprocess.SubprocessError):
         pass  # Installed wheels need not live inside a Git checkout.
     entry = {
-        "time_utc": datetime.now(UTC).isoformat(),
+        # The remote training environment currently uses Python 3.10.
+        "time_utc": datetime.now(timezone.utc).isoformat(),  # noqa: UP017
         "python": platform.python_version(),
         "platform": platform.platform(),
         "torch": str(torch.__version__),

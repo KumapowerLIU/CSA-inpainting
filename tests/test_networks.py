@@ -24,11 +24,25 @@ def test_model_shapes_and_independent_batch(batch):
     torch.testing.assert_close(output.refined, separate, atol=2e-5, rtol=2e-4)
 
 
-def test_refinement_gradient_reaches_rough_stage(batch):
+def test_refinement_gradient_is_isolated_from_rough_stage(batch):
     model = InpaintingModel(width=4, depth=6)
     output = model(*batch)
     output.refined.square().mean().backward()
-    assert sum(p.grad.abs().sum() for p in model.rough.parameters() if p.grad is not None) > 0
+    assert all(p.grad is None for p in model.rough.parameters())
+    assert sum(p.grad.abs().sum() for p in model.refine.parameters() if p.grad is not None) > 0
+
+
+def test_rough_gradient_comes_only_from_its_own_l1(batch):
+    model = InpaintingModel(width=4, depth=6)
+    output = model(*batch)
+    parameters = tuple(model.rough.parameters())
+    own_loss = torch.nn.functional.l1_loss(output.rough, batch[0])
+    own_gradients = torch.autograd.grad(own_loss, parameters, retain_graph=True)
+    target = TinyFeatures(32)(batch[0])["relu4_3"]
+    combined_loss = own_loss + output.refined.square().mean() + consistency(output, target)
+    combined_gradients = torch.autograd.grad(combined_loss, parameters)
+    for own, combined in zip(own_gradients, combined_gradients, strict=True):
+        torch.testing.assert_close(own, combined, atol=0, rtol=0)
 
 
 def test_consistency_updates_encoder_and_decoder(batch):
@@ -38,6 +52,7 @@ def test_consistency_updates_encoder_and_decoder(batch):
     output.decoder_features.retain_grad()
     target = TinyFeatures(32)(batch[0])["relu4_3"]
     consistency(output, target).backward()
+    assert all(p.grad is None for p in model.rough.parameters())
     for features in (output.encoder_features, output.decoder_features):
         assert features.grad.abs().sum() > 0
     # Decoder supervision also propagates through the encoder's known features.
@@ -62,6 +77,7 @@ def test_feature_adversarial_path_reaches_generator(batch):
         real = discriminator(features(batch[0])["pool3"])
     relativistic_generator(real, fake).backward()
     assert model.refine.head[1].weight.grad.abs().sum() > 0
+    assert all(p.grad is None for p in model.rough.parameters())
 
 
 def test_real_vgg_indices_normalization_and_input_gradients():
@@ -77,6 +93,24 @@ def test_real_vgg_indices_normalization_and_input_gradients():
     output["pool3"].mean().backward()
     assert image.grad.abs().sum() > 0
     assert all(p.grad is None and not p.requires_grad for p in vgg.parameters())
+
+
+def test_vgg_pool3_early_stop_preserves_values_and_input_gradients():
+    vgg = VGGFeatures(pretrained=False)
+    image = (torch.rand(2, 3, 32, 32) * 2 - 1).requires_grad_()
+    reference = image.detach().clone().requires_grad_()
+    later_calls = []
+    hook = vgg.layers[17].register_forward_hook(lambda *_: later_calls.append(True))
+    early = vgg.pool3_features(image)
+    assert later_calls == []
+    complete = vgg(reference)["pool3"]
+    assert later_calls == [True]
+    hook.remove()
+    torch.testing.assert_close(early, complete, atol=0, rtol=0)
+    probe = torch.randn_like(early)
+    early_gradient = torch.autograd.grad((early * probe).sum(), image)[0]
+    complete_gradient = torch.autograd.grad((complete * probe).sum(), reference)[0]
+    torch.testing.assert_close(early_gradient, complete_gradient, atol=0, rtol=0)
 
 
 def test_256_topology_and_rectangular_inputs():

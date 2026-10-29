@@ -4,22 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "csa-inpainting"
-version = "0.2.0"
+version = "0.3.0"
 description = "Modern PyTorch implementation of Coherent Semantic Attention for Image Inpainting (ICCV 2019)"
 readme = "README.md"
 license-files = ["LICENSE.md"]
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
-  "torch==2.14.1",
-  "torchvision==0.29.1",
-  "numpy>=2.0,<3",
-  "Pillow>=11",
+  "torch>=2.6,<3",
+  "torchvision>=0.21,<1",
+  "numpy>=1.23.5,<3",
+  "Pillow>=10.1",
   "PyYAML>=6",
-  "scikit-image>=0.25",
+  "scikit-image>=0.24",
 ]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.11"]
+perceptual = ["lpips==0.1.4"]
 
 [project.scripts]
 csa = "csa_inpainting.cli:main"
@@ -33,7 +34,7 @@ addopts = "-ra"
 
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py310"
 extend-exclude = ["legacy"]
 
 [tool.ruff.lint]

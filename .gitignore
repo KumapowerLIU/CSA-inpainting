@@ -8,6 +8,11 @@ build/
 dist/
 data/
 runs/
+/releases/
+/checkpoints/
+.learnings/
+# Local operation diaries; the public recipe is docs/TRAINING.md.
+/docs/REMOTE_*.md
 *.pt
 *.pth
 .DS_Store

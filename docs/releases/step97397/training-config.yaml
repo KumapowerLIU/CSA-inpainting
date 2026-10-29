@@ -1,0 +1,40 @@
+# Documentary configuration for the indexed stage-2 runner; not csa train.
+model:
+  width: 64
+  depth: 8
+  attention_chunk_size: 256
+  mask_threshold: 0.3125
+data:
+  train_images: data/train.jsonl
+  val_images: data/validation.jsonl
+  train_masks: ''
+  val_masks: ''
+  mask_mode: random
+  random_min_fraction: 0.1
+  random_max_fraction: 0.4
+  mask_white_is_hole: true
+  image_size: 256
+  center_overlap: 4
+  horizontal_flip: true
+  batch_size: 192
+  workers: 32
+train:
+  output: runs/stage2/run
+  device: cuda:0
+  seed: 2019
+  epochs: 120
+  decay_start: 20
+  lr: 0.0002
+  beta1: 0.5
+  beta2: 0.999
+  reconstruction_weight: 0.1
+  lpips_weight: 1.0
+  lpips_net: vgg
+  lpips_batch_size: 8
+  consistency_weight: 0.01
+  adversarial_weight: 0.002
+  discriminator_width: 64
+  feature_discriminator_width: 512
+  amp: bf16
+  log_every: 1
+  image_discriminator: patch

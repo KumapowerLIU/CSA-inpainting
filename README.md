@@ -1,186 +1,138 @@
-<!-- Visual reference: https://github.com/VoltAgent/awesome-design-md/blob/main/design-md/apple/DESIGN.md
-     Adapted to GitHub Markdown with local SVG artwork and native, selectable text. -->
+<div align="center">
 
-<br>
+<p><strong>ICCV 2019 · Modern PyTorch implementation</strong></p>
 
-<p align="center"><sub>ICCV 2019 · MODERN PYTORCH REIMPLEMENTATION</sub></p>
+# Coherent Semantic Attention for Image Inpainting
 
-<h1 align="center">CSA Inpainting</h1>
+<p>Recover missing image regions with a rough prediction and context-aware refinement.</p>
 
-<p align="center">
-  Coherent Semantic Attention for Image Inpainting<br>
-  <sub>Hongyu Liu · Bin Jiang · Yi Xiao · Chao Yang</sub>
+<p><strong>Hongyu Liu · Bin Jiang · Yi Xiao · Chao Yang</strong></p>
+
+<p>
+  <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html">Paper</a> ·
+  <a href="#try-the-checkpoint">Quickstart</a> ·
+  <a href="https://huggingface.co/KumaPower/CSA">Hugging Face</a> ·
+  <a href="docs/releases/step97397/README.md">Checkpoint card</a> ·
+  <a href="docs/TRAINING.md">Training</a> ·
+  <a href="docs/DATASETS.md">Datasets</a> ·
+  <a href="docs/MIGRATION.md">Implementation notes</a>
 </p>
 
-<p align="center">
-  <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html">Paper ↗</a>
-  &nbsp; · &nbsp;
-  <a href="#quick-start">Quick start ↓</a>
-  &nbsp; · &nbsp;
-  <a href="docs/USAGE.md">中文指南 ↗</a>
-</p>
+<img src="docs/assets/csa-step97397.jpg" alt="Actual step 97,397 inference: masked input, restored image, and original image, shown for three selected examples." width="960">
 
-<br>
+<p><sub>Actual inference from the modern stage-2 checkpoint at step 97,397. Columns: masked input · restored · original.<br>
+Selected examples; <a href="docs/assets/csa-step97397-full.jpg">view all eight preview cases, including failures</a>.</sub></p>
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/hero-dark.svg">
-  <img src="docs/assets/hero.svg" alt="The whole picture. A conceptual illustration of interrupted contours becoming continuous through inpainting." width="100%">
-</picture>
+</div>
 
-<p align="center"><sub>Context search. Coherent generation. Image refinement. · Conceptual illustration.</sub></p>
+This is the author's CSA research repository, reorganized into a typed Python package with explicit masks, native autograd attention, separate training stages, and portable inference weights. The current checkpoint was trained with random masks, **L1 + LPIPS**, and the original **image PatchGAN plus feature discriminator**. Its image discriminator uses the original PatchGAN architecture and random initialization.
 
-<br>
+The 2019 paper and code are the starting point. This trained release includes deliberate numerical, loss, and training changes; it is **a modern research experiment, not a paper-equivalent reproduction or a state-of-the-art claim**. See the [migration notes](docs/MIGRATION.md) for what changed.
 
-The original two-stage inpainting method, rebuilt as a focused Python package. Independent masks for every sample. Native autograd throughout. One command-line interface for training, evaluation, and inference.
+## Try the checkpoint
 
-**Research status.** Software and gradient checks pass, including batched CPU and Apple MPS updates. Dataset training and reproduction of the paper's metrics are still pending. [See the validation record →](docs/VALIDATION.md)
-
-<br>
-
-## Quick start
-
-With [uv](https://docs.astral.sh/uv/getting-started/installation/) installed, run these commands from the repository root:
+Use Python **3.10 or newer**. Install a matching PyTorch/torchvision pair for your CPU or CUDA platform using the [official PyTorch instructions](https://pytorch.org/get-started/locally/), then install this repository. Supported dependency ranges are PyTorch `>=2.6,<3` and torchvision `>=0.21,<1`; these ranges do not mean every cross-version pairing is compatible.
 
 ```bash
-uv sync --locked --extra dev
-uv run --locked csa smoke --device cpu --batch-size 2 --steps 2
+git clone --branch codex/modern-pytorch https://github.com/KumapowerLIU/CSA-inpainting.git
+cd CSA-inpainting
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+# Install the matching torch + torchvision pair for your platform first.
+python -m pip install -e .
 ```
 
-`uv sync` creates an isolated environment and installs the locked dependencies. The smoke check runs two optimizer steps and verifies checkpoint restoration using synthetic inputs, without downloading datasets or VGG weights.
-
-**Python 3.13** by default, with 3.11+ supported. **PyTorch 2.14.1** and **torchvision 0.29.1** pinned.
-
-[pip & CUDA installation →](docs/USAGE.md#安装环境) &nbsp; · &nbsp; [Default configuration →](configs/default.yaml)
-
-<br>
-
-## Context becomes continuity.
-
-The rough U-Net predicts the missing structure. The refinement U-Net applies CSA at one-eighth resolution: each missing feature retrieves a matching known feature, then incorporates the preceding generated feature. VGG consistency supervision and image/feature discriminators guide the result.
-
-<br>
-
-<p align="center">
-  <img src="docs/assets/paper-results.jpg" alt="Historical 2019 results: paired groups of Input, Result, and Ground Truth for buildings, faces, and landscapes." width="880">
-</p>
-
-<p align="center">
-  <sub>Original 2019 results · Input / Result / Ground Truth<br>
-  These examples come from the historical repository. They were not produced by this rewrite.</sub>
-</p>
-
-<br>
-
-## Built for experiments.
-
-**Independent samples.** Each sample has its own mask. Cosine search is chunked, and the coherent generation recurrence remains differentiable.
-
-**Every run has a record.** Typed configuration, YAML overrides, dry runs, and source/environment records make experiment settings inspectable.
-
-**Resume with the full state.** Checkpoints include the model, Adam optimizer, scheduler, AMP scaler, epoch, step, and RNG state. Resuming is supported at epoch boundaries.
-
-**Choose your device.** CPU, CUDA, and Apple MPS are supported in code. CUDA uses `torch.amp` with fp32 CSA computation; hardware validation is pending.
-
-<br>
-
-## One interface. Every workflow.
-
-Preview an experiment before allocating a model or loading data:
+Download the 528.5 MB [portable checkpoint](https://huggingface.co/KumaPower/CSA/resolve/main/csa-stage2-step97397.pt) from [KumaPower/CSA](https://huggingface.co/KumaPower/CSA). The [checkpoint card](docs/releases/step97397/README.md) records its checksum and provenance. Run the included example:
 
 ```bash
-uv run --locked csa train --config configs/default.yaml \
-  --set data.batch_size=4 train.output=runs/csa-b4 \
-  --dry-run
+mkdir -p checkpoints
+curl -fL https://huggingface.co/KumaPower/CSA/resolve/main/csa-stage2-step97397.pt \
+  -o checkpoints/csa-stage2-step97397.pt
+
+csa infer \
+  --checkpoint checkpoints/csa-stage2-step97397.pt \
+  --image examples/masked.png \
+  --mask examples/mask.png \
+  --output outputs/restored.png \
+  --device auto
 ```
 
-Set your data paths in [`configs/default.yaml`](configs/default.yaml), then train:
+**White mask pixels mark the hole.** The output copies known pixels from the input and fills the masked region. The release was trained at 256 × 256; inference pads other sizes to the network's stride and crops the output back, but quality at other resolutions has not been established. Compare the example with [`examples/expected.png`](examples/expected.png).
 
-```bash
-uv run --locked csa train --config configs/default.yaml
-```
+Inference needs only the portable checkpoint: no discriminator, VGG, LPIPS, or pretrained-weight download. `auto` selects CUDA, then MPS, then CPU. See [usage](docs/USAGE.md) for custom images, folder evaluation, and an offline software smoke test.
 
-<details>
-<summary><strong>Resume, evaluate, and inpaint</strong></summary>
+## What the release contains
 
-```bash
-# Resume at an epoch boundary
-uv run --locked csa train --config configs/default.yaml \
-  --resume runs/csa/latest.pt
+| Component | Current release |
+|---|---|
+| Rough prediction | Separately trained U-Net, frozen during stage 2 |
+| Refinement | CSA refinement network with bounded `tanh` output |
+| Masks | Per-image random rectangles, brush strokes, or their union; 10–40% missing area |
+| Stage-2 image objective | `0.1 × L1 + 1.0 × LPIPS` |
+| Additional supervision | `0.01 × consistency + 0.002 × (image GAN + feature GAN)` |
+| Discriminators | Original image PatchGAN and VGG-feature PatchGAN; RaLSGAN objective |
+| Inference artifact | `csa-stage2-step97397.pt` · 528.5 MB · both generators and public configuration |
 
-# Evaluate with fixed image/mask pairs
-uv run --locked csa evaluate --checkpoint runs/csa/latest.pt \
-  --images /path/to/validation --masks /path/to/masks \
-  --batch-size 4 --output runs/evaluation
+Training and CUDA execution have been exercised in the staged training runs. The release preserves the stage-2 architecture and output semantics of the paused step-97,397 checkpoint. The [checkpoint card](docs/releases/step97397/README.md) records its provenance, checksums, validation, and limitations.
 
-# Inpaint one image
-uv run --locked csa infer --checkpoint runs/csa/latest.pt \
-  --image /path/to/input.png --mask /path/to/mask.png \
-  --output runs/result.png
-```
+### A small, inspectable evaluation
 
-</details>
+The table below is a **fixed 64-image local validation spot-check**, evaluated in FP32 with batch size 1 and identical masks for both outputs. It is not a standard public benchmark or a reproduction of the paper's results. Metrics are averaged per image; hole errors use RGB values in `[0,1]`, and SSIM is computed over the completed full image.
 
-**Mask convention:** white / `1` means missing. Masks have shape `B × 1 × H × W`, with one independent mask per sample. Inference preserves input dimensions and known pixels. Training uses ImageNet-pretrained VGG16.
+| Output at step 97,397 | Hole PSNR ↑ | Hole L1 ↓ | Full-image SSIM ↑ |
+|---|---:|---:|---:|
+| Frozen rough model (stage 1, step 156,181) | 18.4163 dB | 0.083474 | 0.863315 |
+| CSA refinement | 18.1563 dB | 0.083444 | 0.867322 |
 
-[Full usage guide →](docs/USAGE.md) &nbsp; · &nbsp; [Numerical and gradient changes →](docs/MIGRATION.md)
+Refinement does not improve every metric or every image. Missing facial structure, long scene geometry, and repeated architectural details remain difficult. The [complete preview](docs/assets/csa-step97397-full.jpg) and [all 64 metric rows](docs/releases/step97397/evaluation.json) make those limits visible.
 
-<br>
+## Train and extend
 
-## Validation
+The trained release uses **sequential stages**: train rough prediction first, freeze it, then train CSA refinement and its discriminators. The [training guide](docs/TRAINING.md) documents the indexed-data runner, losses, batch-size probes, and checkpoint resume.
 
-| Check | Evidence |
-| :--- | :--- |
-| CSA mathematics | Independent NumPy reference and float64 numerical gradient checks |
-| Batch isolation | Outputs and gradients compared with individual calls using different masks |
-| CPU & Apple MPS | Batch-2 optimizer updates and exact checkpoint output round trips |
-| Full architecture | CPU · 256 × 256 · batch 2 · one complete discriminator/generator update |
-| CUDA & mixed precision | Tests provided; hardware validation pending |
-| Dataset quality & paper metrics | Not yet evaluated |
+1. Install the training extra with `python -m pip install -e '.[perceptual]'` on a CUDA machine.
+2. Put complete RGB images in separate train/validation folders, then follow the [runtime and index preparation](docs/TRAINING.md#prepare-independent-runtimes).
+3. Run [stage 1](docs/TRAINING.md#stage-1-rough-reconstruction), select its checkpoint on held-out images, then run [stage 2](docs/TRAINING.md#stage-2-csa-refinement) with that frozen parent.
 
-```bash
-uv run --locked --extra dev pytest -q
-```
+Both stages use **L1 = 0.1 and LPIPS = 1** in the documented fresh-training recipe. Stage 2 adds CSA consistency and the original image/feature PatchGAN losses. Masks are generated online, with 10–40% missing area; no mask dataset is needed. The guide starts at batch 8 and includes a memory probe. The recorded runs used batch 256 for the stage-1 LPIPS phase and 192 for stage 2 on one H100.
 
-The full-architecture check uses randomly initialized VGG weights to verify execution. It does not establish feature quality or convergence. CSA generation remains sequential; optimal GPU throughput, DDP, and legacy checkpoint compatibility are not claimed.
+### Training data and where to find it
 
-[Validation details →](docs/VALIDATION.md) &nbsp; · &nbsp; [Engineering decisions →](docs/DESIGN.md)
+| Dataset | Used in this release | Official source |
+|---|---|---|
+| Unsplash-derived photographs | 296,145 training records; 2,000 held-out records | [Unsplash Dataset](https://unsplash.com/data) · [access and schema](https://github.com/unsplash/datasets) |
+| Places365-Standard | 901,730 images: a fixed random half of the 1,803,460-image training archive | [Download page](http://places2.csail.mit.edu/download.html) · [CSAIL repository](https://github.com/CSAILVision/places365) |
+| HDTF talking-head frames | Added during stage 2: 30,128 selected frames, repeated into 299,469 sampling entries | [HDTF data and preprocessing](https://github.com/MRzzm/HDTF) |
 
-<br>
+The base mixture has **1,197,875 entries**; the final stage-2 mixture has **1,497,344 sampling entries**, approximately 20% faces. This is not a count of unique image contents. The Unsplash selection and HDTF frame manifests are private experiment indices, so downloading the public sources does not recreate the exact split. The [dataset guide](docs/DATASETS.md) explains acquisition, subset selection, validation boundaries, and how to use your own images. These are the modern release's data choices, not the original paper's benchmark protocol.
 
-## Explore the implementation
+### Other workflows and reference
 
-<details>
-<summary><strong>A small package, with explicit responsibilities</strong></summary>
+The package also retains `csa train`, an image-folder **joint-training** entry point. It updates rough and refinement in the same training loop with detached rough inputs to refinement. It is a separate workflow; it does not reproduce the staged release simply by using the default config.
+
+| Guide | Contents |
+|---|---|
+| [Usage](docs/USAGE.md) | Installation, masks, inference, evaluation, smoke checks |
+| [Training](docs/TRAINING.md) | Stage 1 → stage 2, indexed datasets, objectives, resume |
+| [Datasets](docs/DATASETS.md) | Data sources, official access links, mixture and split details |
+| [Checkpoints](docs/CHECKPOINTS.md) | Portable export, full training states, compatibility |
+| [Migration](docs/MIGRATION.md) | Original-code audit, preserved structure, deliberate differences |
+| [Design](docs/DESIGN.md) | Package layout and engineering decisions |
 
 ```text
-src/csa_inpainting/
-├── attention.py     Cosine search and coherent generation
-├── networks.py      U-Nets, discriminators, VGG features
-├── masks.py         Binary masks and feature-space projection
-├── losses.py        Reconstruction, consistency, RaLSGAN
-├── data.py          Images, masks, deterministic augmentation
-├── engine.py        Optimization, device handling, checkpoints
-├── experiment.py    Output protection and invocation records
-├── evaluation.py    Per-image metrics and previews
-├── diagnostics.py   Synthetic software-check fixtures
-├── config.py        Typed, validated experiment settings
-└── cli.py           Train · evaluate · infer · smoke
-
-configs/             Experiment defaults
-tests/               Numerical and integration checks
-docs/                Guides, design decisions, verification
-legacy/              Historical Python reference
+src/csa_inpainting/    models, attention, losses, trainers, checkpoint I/O, CLI
+scripts/remote/       indexed-data training and evaluation runners
+configs/              joint-training configuration
+examples/             input, mask, and expected release output
+docs/releases/        checkpoint provenance and evaluation records
+legacy/               original source, excluded from the installed package
+tests/                numerical, gradient, checkpoint, and training checks
 ```
 
-The active package runs independently of the archived implementation.
+## Paper, history, and license
 
-</details>
-
-[Source code →](src/csa_inpainting) &nbsp; · &nbsp; [Tests →](tests) &nbsp; · &nbsp; [Historical implementation →](legacy)
-
-<br>
-
-## Citation
+CSA was introduced in **Coherent Semantic Attention for Image Inpainting**, ICCV 2019. The historical implementation is preserved in [`legacy/`](legacy/) and in the [original Git revision](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2). Historical paper figures are not used as evidence for this checkpoint's performance.
 
 ```bibtex
 @InProceedings{Liu_2019_ICCV,
@@ -192,6 +144,4 @@ The active package runs independently of the archived implementation.
 }
 ```
 
-<br>
-
-This project retains the original [CC BY-NC 4.0 notice](LICENSE.md) for educational and academic research use. The historical implementation is based on commit [`f0b0712`](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2).
+The original attribution and noncommercial research-use notice are retained in [LICENSE.md](LICENSE.md). Third-party components retain their own notices. Please check the checkpoint card for artifact-specific information before redistribution.

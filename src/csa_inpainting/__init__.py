@@ -4,4 +4,4 @@ from .attention import CoherentSemanticAttention
 from .networks import InpaintingModel
 
 __all__ = ["CoherentSemanticAttention", "InpaintingModel"]
-__version__ = "0.2.0"
+__version__ = "0.3.0"

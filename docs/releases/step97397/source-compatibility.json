@@ -1,0 +1,25 @@
+{
+  "checkpoint_step": 97397,
+  "checks": [
+    {
+      "module": "attention.py",
+      "scope": "entire_module",
+      "ast_equal_to_training_snapshot": true
+    },
+    {
+      "module": "networks.py",
+      "scope": "entire_module",
+      "ast_equal_to_training_snapshot": true
+    },
+    {
+      "module": "stage1.py",
+      "scope": "entire_module",
+      "ast_equal_to_training_snapshot": true
+    },
+    {
+      "module": "stage2.py",
+      "scope": "Stage2InpaintingModel",
+      "ast_equal_to_training_snapshot": true
+    }
+  ]
+}

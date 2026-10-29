@@ -1,95 +1,93 @@
-# 迁移依据与有意差异
+# Migration notes
 
-基线为作者仓库 commit `f0b0712aa950cc559062dfef04c2f3f884a1f3e2`。
-原始 Python 源码和论文图在 `legacy/`，不参与新版 import、安装或测试收集。
-按项目整理要求，所有 notebook 和历史 Python 字节码已删除；原始版本仍可在上述 Git
-基线中查阅。新版全部通过 Python 包和命令行运行。
+This modern implementation is based on the author's repository at commit [`f0b0712aa950cc559062dfef04c2f3f884a1f3e2`](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2), with the [ICCV 2019 paper](https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html) as the method reference. Original Python source and historical figures remain in `legacy/`, outside active imports, packaging, and tests. Historical notebooks and bytecode are not part of the modern working tree; the original Git revision remains available.
 
-参考：[ICCV 正式论文入口](https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html)、
-[作者论文全文和附录](https://arxiv.org/html/1905.12384)。
+The modern trained release is not a numerically identical port or a paper-equivalent reproduction. This document records the important boundaries.
 
-## 代码审计
+## Original-code audit
 
-| 原位置 | 发现 | 新版处理 |
-|---|---|---|
-| `train.ipynb` | `mask[0][0]` 丢弃 batch 中其他样本的 mask | B×1×H×W 的逐样本 mask |
-| `util/util.py:cal_feat_mask` | 强制 batch=1 | 批量 avg_pool，等价于原 4×4 常量卷积 |
-| `models/CSA_model.py` | mask 缓存与第一张样本耦合，`fixed_mask` 容易使动态 mask 失效 | mask 是 forward 的显式参数，无跨次缓存 |
-| `models/CSAFunction.py` | 用 LongTensor 存递推浮点权重 | 自动微分浮点计算，不保存整张 attention 路由矩阵 |
-| 同上 | 手写 backward 额外添加 identity 梯度，空间索引使用 `i*h+j` | 删除手写 backward，支持矩形特征图 |
-| 同上及 `NonparametricShift.py` | 动态构建卷积、`.data`、`Variable`，检查 `is_available` 未调用函数 | 张量矩阵乘与 gather，跟随输入设备 |
-| `models/CSA.py:forward` | 用 `.data` 拼粗预测，切断 refinement→rough 路径；还会原地修改输入 | `torch.where` 非原地组合，端到端可导 |
-| `models/CSA.py:backward_G` | 一致性损失包装为 `Variable(gl.loss.data,...)`，与网络断开 | 显式返回 encoder/decoder 特征并直接计算损失 |
-| `models/CSA.py:backward_D/backward_G` | fake VGG 由 `fake_B.data` 得到，特征对抗项不能训练 G | D 时 detach，G 时保留 VGG 对输入的梯度 |
-| `models/vgg16.py` | 未做 ImageNet 标准化；`relu3_3` 实际是 pool3 | 明确 `pool3` 与 `relu4_3`，使用权重枚举、RGB 标准化 |
-| checkpoint | 仅保存网络参数 | 同时保存 Adam、scheduler、scaler、epoch、step 和 RNG |
-| `GANLoss` | 名字含 wgan_gp/vanilla，但实际公式始终是 RaLSGAN | 仅提供明确的 relativistic average least squares loss |
+| Original behavior | Modern implementation |
+|---|---|
+| `mask[0][0]` and feature-mask utilities effectively force one sample's mask | Explicit `B × 1 × H × W` masks; feature masks are computed per sample |
+| Cached masks can outlive the input that created them | Mask passed explicitly on every forward |
+| Floating CSA recurrence weights stored in integer tensors | Floating-point native autograd |
+| Custom backward adds an identity gradient; rectangular indexing uses `i*h+j` | Remove custom backward; correct rectangular spatial indexing |
+| Dynamic convolution construction, `.data`, and `Variable` | Tensor search/gather and input-following device placement |
+| Coarse output inserted using `.data`, mutating inputs | Explicit `rough.detach()` and non-mutating `torch.where` composition |
+| Consistency loss wrapped from `gl.loss.data`, disconnecting the graph | Explicit encoder/decoder features and differentiable consistency loss |
+| Fake VGG features created from detached images during G training | Detach for D; preserve fake-image gradients through frozen VGG for G |
+| VGG omits ImageNet normalization and calls pool3 `relu3_3` | Correct RGB normalization and explicit `pool3`/`relu4_3` outputs |
+| Checkpoints primarily contain network weights | Versioned model, optimizer, scheduler, scaler, RNG, and progress states |
+| GAN mode names suggest several objectives while the formula is RaLSGAN | Explicit relativistic-average least-squares losses |
 
-## 保留的结构
+These fixes preserve deliberate gradient boundaries while removing accidental disconnections. They also change optimization behavior, so software correctness checks alone cannot establish equivalent final quality.
 
-Rough 使用 8 层 pix2pix U-Net，4×4 stride-2 卷积、InstanceNorm、skip、tanh 输出。
-Refinement 保留先 stem，再 dilated 4×4 stride-2 与 3×3 channel convolution 的结构，
-在第 3 次下采样（256→32）后、InstanceNorm 前放置 512 通道 CSA。
-其对应 decoder 的 512 通道特征也参与一致性监督。
-最深 1×1 层不使用 InstanceNorm；refinement 输出沿用源码的线性输出，不擅自加入 tanh。
-新版激活均为非原地操作，避免旧递归模块中 `LeakyReLU(inplace=True)` 改写用于 skip
-拼接的输入；因此这里的“保留结构”指层数、通道与连接设计，不是复刻所有原地副作用。
+## Architecture and intentional differences
 
-图像判别器保留 70×70 PatchGAN；特征判别器沿用源码的
-VGG pool3（256×32×32）→ 三层 stride-2 4×4 卷积（512 通道）设计。
-论文正文的 pool3 描述与该输入一致，但附录 Table 5 的 VGG 层名和 stride 标注与源码不同。
-这里明确以已发布代码拓扑为准，没有声称两者完全一致。
+The rough model keeps the eight-level pix2pix-style U-Net: 4 × 4 stride-2 convolutions, InstanceNorm, skip connections, and a `tanh` output. Refinement retains the stem, dilated 4 × 4 downsampling, and 3 × 3 channel-convolution design. CSA operates on 512-channel features at the third downsampling level (256 → 32), before InstanceNorm. The corresponding 512-channel decoder features participate in consistency supervision. InstanceNorm is omitted at the deepest 1 × 1 level.
 
-默认填洞颜色保持源码的 `[123,104,117]/127.5-1`。输入是 RGB，未将其重新解释为 BGR。
+The output activation is versioned: **modern joint training has a linear refinement head; sequential stage 2 has a `tanh` refinement head**. Loading a checkpoint must not silently switch between them.
 
-## CSA 数学与数值处理
+A further known difference is the deepest refinement downsampling: the modern implementation uses ordinary 4 × 4, stride 2, padding 1, while the original innermost layer uses dilation 2 and padding 3. Parameters and output shapes match, but sampling locations differ. On the default 2 × 2 input, the original samples only the bottom-right location while the modern layer sees all four. This difference is retained for the existing modern checkpoint semantics; it has not been proven to cause a particular quality failure. A future change requires a separately versioned experiment.
 
-1. 每张样本独立地在已知区域搜索 1×1 feature patch。
-2. 使用论文 Eq. 1 的双边 L2 标准化 cosine similarity。原代码只标准化 known patch，
-   argmax 通常相同，但记录的分值和后续递推混合比例并不相同。
-3. 洞内按行优先顺序遍历。第一点取最佳源 patch，随后用当前原始 query 与前一个
-   已生成 patch 的 cosine similarity 构成 Eq. 3 的递推。
-4. 已知区域保持不变。硬 argmax 的索引不求导，但选中分数、源值与递推权重参与求导；
-   在非平局、非 clamp 边界上用 float64 数值差分验证。
-5. **数值稳定性改动**：CSA 输入来自线性卷积，可能有负 cosine。
-   原始比值在 `Dad + Dmax ≈ 0` 时可能发散。新版把两种相似度裁到非负，
-   总和接近零时退回最佳源 patch。两种分值为正时与 Eq. 3 一致；
-   对负分值的处理是明确的工程选择，尚需后续训练/消融验证，不是论文原式逐值复现。
-6. 空洞掩码是恒等映射；全缺失特征图无可搜索上下文，报出错误。
-   极细原图掩码经过阈值下采样可能没有 feature holes，此时 CSA 为恒等，
-   图像重建与对抗训练仍有效。
+Activations avoid in-place mutation, including the historical recursive skip-input side effects. “Preserved structure” therefore refers to the broad layer/channel/connection design, not every incidental behavior of the old implementation.
 
-搜索阶段在 no_grad 下分块求索引，然后重新计算选中的相似度以保留必要梯度；
-避免保存完整两两相似度的 autograd 图。生成过程仍是顺序递推，并按样本循环，
-这保证任意形状 mask 的正确性，但未将其宣称为充分优化的并行 CUDA kernel。
-不额外加入原版自定义 backward 的 identity 直通梯度。
+The image discriminator retains the original 70 × 70 PatchGAN. The feature discriminator follows the released source: VGG pool3 features (256 × 32 × 32 at the training resolution), then three stride-2 4 × 4 convolutions with 512 channels. The paper's appendix Table 5 differs from the released source in VGG layer/stride labels; this implementation explicitly follows the source topology.
 
-## 损失与训练
+The fill color remains `[123, 104, 117] / 127.5 - 1`, interpreted as RGB.
 
-- reconstruction 是 rough/refined 对 GT 的完整图像 mean L1。
-- consistency 对 CSA encoder 与对应 decoder 的误差同时施加 feature mask，
-  然后对整张特征图 mean MSE。避免旧实现只 mask prediction、未 mask target
-  造成的已知区域常数偏置。论文写作求和、源码为 mean；此处保留 mean 的尺度约定。
-- 默认 loss 权重采用论文 `1, 0.01, 0.002`；旧 notebook 为 `100, 1, 0.2`，
-  比例相同，总尺度不同。Adam 对整体尺度并非在所有数值条件下严格不变。
-- G 的对抗损失将图像与特征两项相加；D 的两项平均，与旧源码组合方式一致。
-- VGG 参数冻结但 fake 分支对输入可导；GT 分支 no_grad。
-- 两阶段共同接受 refinement 梯度，符合论文端到端训练意图；旧 `.data` 隔离不保留。
-- 采用单个 G optimizer 管理两个生成器，单个 D optimizer 管理两个判别器，
-  四者仍有独立的逐参数 Adam 状态，学习率和 betas 相同。
-- InstanceNorm 使特征归一化不依赖同批其他图片，但 RaLSGAN 的均值故意跨整个
-  batch/patch 计算；增大 batch 不意味着优化轨迹与 batch=1 相同。
+## CSA math and numerical behavior
 
-## 可复现边界
+1. Each sample independently searches known 1 × 1 feature patches.
+2. Similarity uses the bilateral L2-normalized cosine in paper Eq. 1. The original source normalized only known patches; the selected argmax is usually unchanged, but its scores and recurrence weights need not match.
+3. Holes are processed in row-major order. The first hole takes the best known patch. Later holes combine their best patch with the preceding generated patch using the current original query's similarity.
+4. Hard argmax indices are discrete. Gradients flow through selected scores, source values, and recurrence weights, without an extra identity straight-through term.
+5. **Numerical stabilization:** because linear features may have negative cosine scores, the original ratio can diverge when its denominator approaches zero. The modern recurrence clamps both similarities to nonnegative values and falls back to the best source patch when their sum is near zero. Positive-score cases follow Eq. 3; the negative-score policy is an explicit engineering choice, not the paper's unchanged formula.
+6. Empty feature holes produce an identity mapping. Completely missing feature maps are rejected because no source context exists. Very thin image masks can disappear after feature-mask downsampling; image-level objectives still apply in that case.
 
-配置、CPU/Python/CUDA/MPS 随机状态、优化器等都写入新版 checkpoint。
-数据增强按 seed/epoch/index 派生；shuffle 按 seed+epoch 派生，因此不依赖 worker 数量。
-恢复精度的测试针对同一 CPU 软件环境；跨设备/跨库版本不保证逐比特一致。
-只在 epoch 末保存；不声称支持 epoch 中间精确恢复。
-允许迁移文件路径、worker 数和运行设备，但数据内容变更会改变后续训练，即使配置兼容。
-本版不包含 DDP、梯度累积或 torch.compile（动态 CSA 递推需先做编译兼容性与性能验证）。
-依赖由 `uv.lock` 锁定；实验支持带类型校验的 `--set` 和不加载数据/模型的 `--dry-run`，
-每次运行记录环境、配置来源和源码哈希。设计取舍见 [DESIGN.md](DESIGN.md)。
+Search indices are computed in chunks under `no_grad`, then selected similarities are recomputed with gradients. This avoids retaining a full pairwise-search autograd graph. Batch recurrence pads only the ends of per-sample hole sequences; padded positions cannot affect real holes or other samples. Known positions are preserved.
 
-旧 checkpoint 参数名、历史梯度语义、VGG 预处理都与本版有差异，不能直接 strict=False
-装入后称为成功迁移。尚无用户提供的旧 checkpoint，本次未实现或声称验证权重转换。
+Float64 gradient checks cover differentiable, non-tie/non-clamp-boundary cases. Batched CUDA reductions can change FP32 rounding, and BF16 may cross adjacent quantization levels. Checks distinguish underlying FP32 error from dtype tolerance. Kernel-level improvements are not evidence of an end-to-end training speedup.
+
+## Loss conventions and the joint trainer
+
+- Reconstruction is full-image mean L1.
+- Consistency masks the encoder/decoder error on both sides, then takes mean MSE over the full feature grid. This removes the old known-region constant offset from masking only predictions. It retains the code's mean convention rather than converting the paper's written sums into an unqualified scale change.
+- Joint-training defaults are `1 × reconstruction + 0.01 × consistency + 0.002 × GAN`. The old notebook used `100, 1, 0.2`: the ratios match but the total scale differs, and Adam is not strictly invariant to that change under all numerical conditions.
+- G sums image and feature adversarial terms; D averages them.
+- VGG weights are frozen; generated images retain gradients through VGG, and target features use `no_grad`.
+- The original master detaches rough predictions before refinement. The joint trainer preserves this boundary: rough receives its own reconstruction gradient, while refinement losses do not update rough.
+- Rough and refinement have separate Adam optimizers and are both updated within each joint batch. This is distinct from training rough to a selected checkpoint before freezing it for stage 2.
+- InstanceNorm is sample-independent, but RaLSGAN means intentionally span the batch/patch predictions. Increasing batch size changes the optimization trajectory.
+
+## Sequential stage 2 and the released checkpoint
+
+`Stage2Trainer` and `Stage2InpaintingModel` use the separate `stage2_v1` checkpoint family:
+
+- `--init-stage1` strictly loads rough weights and fill color from a full stage-1 checkpoint. Rough remains frozen, in evaluation mode, under `no_grad`. Refinement and discriminators start fresh.
+- The refinement head uses `tanh`, with LPIPS receiving `[-1,1]` RGB directly; no extra clamp or double ImageNet normalization is added before LPIPS.
+- The release objective is `0.1 × L1(refined, target) + LPIPS(completed, target) + 0.01 × consistency + 0.002 × (image GAN + feature GAN)`.
+- VGG/LPIPS activations are processed in FP32 chunks with recomputation. Full-batch outputs are combined before RaLSGAN means, preserving the configured optimizer batch.
+- Stage-2 counters, optimizers, and sample cursor start from zero. Parent checkpoint hash, step, epoch, and semantics are recorded; hashing and loading refer to the same opened checkpoint.
+- A full checkpoint contains rough, refinement, discriminators, perceptual weights, optimizer/scheduler/scaler states, RNG, and sample progress. Resume is self-contained and validates perceptual provenance instead of downloading replacement weights.
+- Temporary D parameter-freezing flags are restored even on exceptions. A failed partial update prevents continued training or saving an inconsistent state.
+
+The release's image D is the **original PatchGAN**, not a pretrained Real-ESRGAN discriminator. LPIPS is a modern addition, not a loss from the original 2019 paper. See [TRAINING.md](TRAINING.md) for the actual staged commands.
+
+## Retained Real-ESRGAN experiment
+
+A separately versioned experimental path supports `--image-discriminator realesrgan_unet_sn`. It initializes the image discriminator from the official Real-ESRGAN U-Net/SN weights, restarts stage 2 from stage 1, and keeps CSA's RaLSGAN objective. It does not reproduce Real-ESRGAN training.
+
+Only that image D maps RGB from `[-1,1]` to `[0,1]`. Spectral-normalization state is updated once in FP32 before each D/G phase and held fixed across chunks and activation recomputation. Checkpoints record separate semantics, initialization hashes, and normalization policy. Resume does not require the original pretrained file.
+
+The official architecture's BSD-3-Clause notice remains in [discriminators.py](../src/csa_inpainting/discriminators.py). The verified initialization source is [RealESRGAN_x4plus_netD.pth](https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.3/RealESRGAN_x4plus_netD.pth), SHA-256 `afc291719bf0a8bd25ba2b4afbbc5fc0634382dac111d3e1d3a7240d32dfd33a`. This historical experiment is separate from the step-97,397 PatchGAN release.
+
+## Reproducibility and compatibility
+
+Joint format 2 records `rough_detached_separate_adam_v1`; older modern format 1 remains available for inference but cannot claim exact resume under the newer joint semantics. Sequential stage-1 and stage-2 files have their own format and validation rules. Portable `csa_inference_v1` packages retain inference semantics and sanitized provenance but cannot resume training; see [CHECKPOINTS.md](CHECKPOINTS.md).
+
+Training augmentation derives from seed/epoch/index, and shuffle from seed plus epoch. The joint CLI saves at epoch boundaries. The indexed staged runner additionally saves between batches and on clean SIGINT/SIGTERM, with sample-cursor resume. Data identity and configuration must remain compatible; explicitly allowed dataset/loss/batch changes are recorded transitions, not exact replay.
+
+Same-environment resume checks do not guarantee cross-device or cross-version bitwise equality. DDP, gradient accumulation, and `torch.compile` are not implemented as supported training modes. The lockfile records a development baseline, while package dependency ranges permit other compatible installations.
+
+There is no validated converter for original 2019 weights. Loading mismatched parameter names with `strict=False` is not a successful migration. The current trained checkpoint, numerical tests, and visible predictions establish a working modern implementation; they do not remove the deliberate method differences documented here.

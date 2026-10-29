@@ -5,13 +5,19 @@ from .networks import InpaintingOutput
 
 
 def relativistic_discriminator(real: Tensor, fake: Tensor) -> Tensor:
+    """RaLSGAN D objective; average over every batch/patch score, in FP32."""
     real, fake = real.float(), fake.float()
-    return ((real - fake.mean() - 1).square().mean() + (fake - real.mean() + 1).square().mean()) / 2
+    real_relative = real - fake.mean()
+    fake_relative = fake - real.mean()
+    return ((real_relative - 1).square().mean() + (fake_relative + 1).square().mean()) / 2
 
 
 def relativistic_generator(real: Tensor, fake: Tensor) -> Tensor:
+    """RaLSGAN G objective; both terms must retain gradients through fake."""
     real, fake = real.float(), fake.float()
-    return ((real - fake.mean() + 1).square().mean() + (fake - real.mean() - 1).square().mean()) / 2
+    real_relative = real - fake.mean()
+    fake_relative = fake - real.mean()
+    return ((real_relative + 1).square().mean() + (fake_relative - 1).square().mean()) / 2
 
 
 def reconstruction(output: InpaintingOutput, target: Tensor) -> Tensor:

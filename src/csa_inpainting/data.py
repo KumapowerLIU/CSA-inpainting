@@ -11,7 +11,7 @@ from torch import Tensor
 from torch.utils.data import Dataset
 
 from .config import DataConfig
-from .masks import center_mask
+from .masks import center_mask, random_mask
 
 EXTENSIONS = {".jpg", ".jpeg", ".png", ".bmp", ".webp", ".tif", ".tiff"}
 
@@ -87,6 +87,10 @@ class InpaintingDataset(Dataset):
             image = rgb_tensor(image)
         if self.config.mask_mode == "center":
             mask = center_mask(size, size, self.config.center_overlap)
+        elif self.config.mask_mode == "random":
+            mask = random_mask(
+                size, size, rng, self.config.random_min_fraction, self.config.random_max_fraction
+            )
         elif self.config.mask_mode == "brush":
             mask = brush_mask(size, rng)
         else:

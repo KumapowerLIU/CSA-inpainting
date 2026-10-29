@@ -1,0 +1,67 @@
+{
+  "status": "PASS",
+  "step": 97397,
+  "python": "3.10.14",
+  "torch": "2.6.0+cu124",
+  "device": "NVIDIA H100 80GB HBM3",
+  "precision": "FP32",
+  "deterministic_algorithms": true,
+  "cublas_workspace_config": ":4096:8",
+  "inference_bytes": 528510920,
+  "inference_sha256": "605b80c18dcb0856367e6276813df0b54ec42aabea782af1631052aedb7abdfe",
+  "full_checkpoint_sha256": "9613d50e7d5cc7e7bf097b13a3987d29d086f82c84596c4a7b35411dcfa92c52",
+  "generator_tensor_sha256": "455200b2e905de39d96a0606def7f06b0d2f399eba5256e9126033ad2614522b",
+  "cases": [
+    {
+      "validation_index": 582,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 1,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 605,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 1,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 1659,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 1,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 477,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 1,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 97,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 16,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 1001,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 1,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 1492,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 5,
+      "known_pixels_equal": true
+    },
+    {
+      "validation_index": 1850,
+      "full_vs_export_tensor_equal": true,
+      "frozen_run_png_max_abs_error": 13,
+      "known_pixels_equal": true
+    }
+  ],
+  "cli_example_png_max_abs_error": 1,
+  "pretrained_downloads": 0,
+  "note": "Bitwise forward equality verified with deterministic GPU algorithms. Default backend kernels and different devices may round differently; frozen-run PNG differences are recorded as observations, not export equality checks."
+}

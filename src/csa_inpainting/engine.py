@@ -24,6 +24,8 @@ from .networks import (
     VGGFeatures,
 )
 
+TRAINING_SEMANTICS = "rough_detached_separate_adam_v1"
+
 
 def seed_everything(seed: int) -> None:
     random.seed(seed)
@@ -51,7 +53,7 @@ def choose_device(requested: str) -> torch.device:
 
 def load_checkpoint(path: str | Path) -> dict:
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
-    if checkpoint.get("format_version") != 1:
+    if checkpoint.get("format_version") not in {1, 2}:
         raise ValueError("Unsupported checkpoint; legacy weights are not interchangeable")
     return checkpoint
 
@@ -66,6 +68,10 @@ class Trainer:
         diagnostic: Literal["tiny", "random_vgg"] | None = None,
     ):
         config.validate()
+        if config.train.lpips_weight > 0:
+            raise ValueError(
+                "LPIPS loss requires Stage1Trainer or Stage2Trainer; see docs/TRAINING.md"
+            )
         if diagnostic not in {None, "tiny", "random_vgg"}:
             raise ValueError("diagnostic must be 'tiny', 'random_vgg', or None")
         if test_fixture:
@@ -109,7 +115,10 @@ class Trainer:
         )
         t = config.train
         self.g_optimizer = torch.optim.Adam(
-            self.generator.parameters(), lr=t.lr, betas=(t.beta1, t.beta2)
+            self.generator.refine.parameters(), lr=t.lr, betas=(t.beta1, t.beta2)
+        )
+        self.p_optimizer = torch.optim.Adam(
+            self.generator.rough.parameters(), lr=t.lr, betas=(t.beta1, t.beta2)
         )
         self.d_optimizer = torch.optim.Adam(
             [*self.image_d.parameters(), *self.feature_d.parameters()],
@@ -121,6 +130,7 @@ class Trainer:
             return max(0.0, 1 - max(0, epoch - t.decay_start) / (t.epochs - t.decay_start))
 
         self.g_scheduler = torch.optim.lr_scheduler.LambdaLR(self.g_optimizer, decay)
+        self.p_scheduler = torch.optim.lr_scheduler.LambdaLR(self.p_optimizer, decay)
         self.d_scheduler = torch.optim.lr_scheduler.LambdaLR(self.d_optimizer, decay)
         self.scaler = torch.amp.GradScaler("cuda", enabled=self.amp == "fp16")
         self.global_step = 0
@@ -144,6 +154,7 @@ class Trainer:
         self.image_d.train().requires_grad_(True)
         self.feature_d.train().requires_grad_(True)
         self.g_optimizer.zero_grad(set_to_none=True)
+        self.p_optimizer.zero_grad(set_to_none=True)
         self.d_optimizer.zero_grad(set_to_none=True)
         with self.autocast():
             output = self.generator(image, mask)
@@ -177,7 +188,10 @@ class Trainer:
         t = self.config.train
         g_loss = t.reconstruction_weight * rec + t.consistency_weight * con
         g_loss = g_loss + t.adversarial_weight * (g_image + g_feature)
-        self._backward_step(g_loss, self.g_optimizer)
+        # The detached rough-to-refine input makes these two loss graphs
+        # independent. Backpropagate once, then update both networks using the
+        # same batch's forward pass, as in the released master implementation.
+        self._backward_step(g_loss, self.g_optimizer, self.p_optimizer)
         self.scaler.update()
         self.image_d.requires_grad_(True)
         self.feature_d.requires_grad_(True)
@@ -192,24 +206,28 @@ class Trainer:
         }
         return {name: value.detach().item() for name, value in losses.items()}
 
-    def _backward_step(self, loss: Tensor, optimizer: torch.optim.Optimizer) -> None:
+    def _backward_step(self, loss: Tensor, *optimizers: torch.optim.Optimizer) -> None:
         if not bool(torch.isfinite(loss)):
             raise FloatingPointError(f"Non-finite loss at step {self.global_step}")
         self.scaler.scale(loss).backward()
-        self.scaler.unscale_(optimizer)
+        for optimizer in optimizers:
+            self.scaler.unscale_(optimizer)
         # In fp16 GradScaler handles overflow by skipping the update. Otherwise
         # fail before corrupting weights or optimizer moments.
         if not self.scaler.is_enabled():
-            nn.utils.clip_grad_norm_(
-                [p for group in optimizer.param_groups for p in group["params"]],
-                float("inf"),
-                error_if_nonfinite=True,
-            )
-        self.scaler.step(optimizer)
+            for optimizer in optimizers:
+                nn.utils.clip_grad_norm_(
+                    [p for group in optimizer.param_groups for p in group["params"]],
+                    float("inf"),
+                    error_if_nonfinite=True,
+                )
+        for optimizer in optimizers:
+            self.scaler.step(optimizer)
 
     def finish_epoch(self) -> None:
         self._require_ready()
         self.g_scheduler.step()
+        self.p_scheduler.step()
         self.d_scheduler.step()
         self.completed_epochs += 1
 
@@ -218,7 +236,8 @@ class Trainer:
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         state = {
-            "format_version": 1,
+            "format_version": 2,
+            "training_semantics": TRAINING_SEMANTICS,
             "config": self.config.as_dict(),
             "test_fixture": self.test_fixture,
             "feature_mode": self.feature_mode,
@@ -228,8 +247,10 @@ class Trainer:
             "feature_d": self.feature_d.state_dict(),
             "features": self.features.state_dict(),
             "g_optimizer": self.g_optimizer.state_dict(),
+            "p_optimizer": self.p_optimizer.state_dict(),
             "d_optimizer": self.d_optimizer.state_dict(),
             "g_scheduler": self.g_scheduler.state_dict(),
+            "p_scheduler": self.p_scheduler.state_dict(),
             "d_scheduler": self.d_scheduler.state_dict(),
             "scaler": self.scaler.state_dict(),
             "global_step": self.global_step,
@@ -248,6 +269,12 @@ class Trainer:
         # otherwise partially loaded optimizer/model/RNG state could escape.
         self._restore_pending = True
         state = load_checkpoint(path)
+        if state["format_version"] != 2 or state.get("training_semantics") != TRAINING_SEMANTICS:
+            raise ValueError(
+                "Checkpoint training semantics differ: exact resume requires detached "
+                "rough-to-refine gradients and separate generator optimizers. "
+                "Start a new training run; older modern checkpoints remain inference-compatible."
+            )
         # Changes to placement/logging/data paths are okay; optimization and
         # architecture changes are not an exact resume and should be explicit.
         saved = Config.from_dict(state["config"])
@@ -285,8 +312,10 @@ class Trainer:
             "feature_d",
             "features",
             "g_optimizer",
+            "p_optimizer",
             "d_optimizer",
             "g_scheduler",
+            "p_scheduler",
             "d_scheduler",
             "scaler",
         ):
@@ -303,8 +332,6 @@ class Trainer:
 
 
 def load_generator(path: str | Path, device: torch.device) -> tuple[InpaintingModel, Config]:
-    state = load_checkpoint(path)
-    config = Config.from_dict(state["config"])
-    model = InpaintingModel(**asdict(config.model)).to(device)
-    model.load_state_dict(state["generator"])
-    return model.eval(), config
+    from .inference import load_inference_generator
+
+    return load_inference_generator(path, device)

@@ -20,11 +20,12 @@ def make_images(root):
         Image.fromarray(pixels).save(root / "nested" / f"{i}.png")
 
 
-def test_recursive_loader_masks_and_determinism(tmp_path):
+@pytest.mark.parametrize("mask_mode", ["brush", "random"])
+def test_recursive_loader_masks_and_determinism(tmp_path, mask_mode):
     images = tmp_path / "images"
     make_images(images)
     config = DataConfig(
-        train_images=str(images), val_images=str(images), mask_mode="brush", image_size=64
+        train_images=str(images), val_images=str(images), mask_mode=mask_mode, image_size=64
     )
     dataset = InpaintingDataset(config, True)
     assert len(dataset) == 3
@@ -32,6 +33,7 @@ def test_recursive_loader_masks_and_determinism(tmp_path):
     assert first["image"].shape == (3, 64, 64) and first["mask"].shape == (1, 64, 64)
     assert first["image"].min() >= -1 and first["image"].max() <= 1
     assert torch.equal(first["mask"], dataset[0]["mask"])
+    assert not torch.equal(first["mask"], dataset[1]["mask"])
     dataset.set_epoch(1)
     assert not torch.equal(first["mask"], dataset[0]["mask"])
     validation = InpaintingDataset(config, False)
@@ -105,3 +107,13 @@ def test_invalid_config_and_empty_data(tmp_path):
         Config.from_dict({"data": {"image_size": 123}})
     with pytest.raises(ValueError, match="No supported images"):
         InpaintingDataset(DataConfig(train_images=str(tmp_path)), True)
+
+
+@pytest.mark.parametrize(("minimum", "maximum"), [(0, 0.4), (0.2, 1), (0.5, 0.4), (0.3, 0.3)])
+def test_invalid_random_mask_bounds(minimum, maximum):
+    with pytest.raises(ValueError, match="random_min_fraction"):
+        Config.from_dict({"data": {"random_min_fraction": minimum, "random_max_fraction": maximum}})
+
+
+def test_random_mask_is_default():
+    assert Config().data.mask_mode == "random"

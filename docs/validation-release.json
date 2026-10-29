@@ -1,0 +1,32 @@
+{
+  "date": "2026-10-29",
+  "package_version": "0.3.0",
+  "development": {
+    "python": "3.12.14",
+    "torch": "2.14.1",
+    "device": "cpu",
+    "pytest": {
+      "passed": 313,
+      "skipped": 16,
+      "subtests_passed": 12,
+      "seconds": 174.52,
+      "skip_reason": "CUDA GPU unavailable"
+    },
+    "ruff_check": "PASS",
+    "ruff_format": "PASS",
+    "uv_lock_check": "PASS",
+    "wheel_build": "PASS",
+    "cpu_smoke": "PASS",
+    "local_full_checkpoint_cli": "PASS"
+  },
+  "production": {
+    "python": "3.10.14",
+    "torch": "2.6.0+cu124",
+    "release_tests_passed": 21,
+    "real_image_export_equivalence_cases": 8,
+    "device": "NVIDIA H100 80GB HBM3",
+    "deterministic_algorithms": true,
+    "generator_tensors_equal": true
+  },
+  "resume_test_contract": "All immediately restored states exact; future losses and functional outputs checked within float32 tolerance; no cross-backend bitwise Adam-update claim."
+}

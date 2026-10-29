@@ -103,6 +103,13 @@ def evaluate_command(args: argparse.Namespace) -> None:
     print(json.dumps(summary, indent=2))
 
 
+def export_command(args: argparse.Namespace) -> None:
+    from .inference import export_checkpoint
+
+    metadata = export_checkpoint(args.checkpoint, args.output)
+    print(json.dumps({"output": str(args.output), **metadata}, indent=2))
+
+
 @torch.inference_mode()
 def infer(args: argparse.Namespace) -> None:
     device = choose_device(args.device)
@@ -205,7 +212,7 @@ def main() -> None:
     p.add_argument("--checkpoint", required=True)
     p.add_argument("--images")
     p.add_argument("--masks")
-    p.add_argument("--mask-mode", choices=["center", "files", "brush"])
+    p.add_argument("--mask-mode", choices=["random", "center", "files", "brush"])
     p.add_argument("--black-is-hole", action="store_true")
     p.add_argument("--device", default="auto")
     p.add_argument("--batch-size", type=int, default=1)
@@ -221,6 +228,14 @@ def main() -> None:
     p.add_argument("--black-is-hole", action="store_true")
     p.add_argument("--device", default="auto")
     p.set_defaults(run=infer)
+    p = commands.add_parser("export", help="Export a portable stage-2 inference checkpoint on CPU")
+    p.add_argument("--checkpoint", required=True)
+    p.add_argument(
+        "--output",
+        required=True,
+        help="New output file; existing files are never replaced",
+    )
+    p.set_defaults(run=export_command)
     p = commands.add_parser("smoke", help="Offline synthetic check, no dataset or VGG download")
     p.add_argument("--device", default="cpu")
     p.add_argument("--batch-size", type=int, default=2)

@@ -12,14 +12,14 @@ require measurements and reproduction experiments that have not been run.
 | Native autograd for CSA | Removes the old manual backward, integer attention weights and detached loss paths. |
 | Typed dataclass configuration and outputs | Named fields make network boundaries and experiment settings easy to read. |
 | Explicit `forward(image, mask)` | Every sample owns its mask; there is no stale global mask cache. |
-| `torch.amp` with fp32 CSA calculations | Uses the current AMP API while protecting similarity and recurrent calculations. CUDA behavior still needs hardware validation. |
+| `torch.amp` with fp32 CSA calculations | Protects similarity and recurrent calculations. CUDA BF16 training has been exercised on an H100 with PyTorch 2.6; other devices and precision modes need their own validation. |
 | `torch.inference_mode()` | Evaluation and inference do not construct training graphs. |
 | `zero_grad(set_to_none=True)` and explicit detach boundaries | Makes generator/discriminator updates and gradient ownership clear. |
 | Frozen VGG parameters, differentiable fake-image path | Feature supervision can update the generator without optimizing VGG. |
 | `torch.load(..., weights_only=True)` and atomic checkpoint replacement | Loads supported state types and prevents a partial write replacing the last complete checkpoint. |
 | `uv.lock` and a small `pyproject.toml` | Versions are resolved once and can be installed consistently with `uv sync --locked --extra dev`. |
 
-The AMP API choice follows the [PyTorch AMP documentation](https://docs.pytorch.org/docs/2.14/amp.html);
+The AMP API choice follows the [PyTorch AMP documentation](https://docs.pytorch.org/docs/stable/amp.html);
 the dependency workflow follows the [uv locking documentation](https://docs.astral.sh/uv/concepts/projects/sync/).
 
 ## Experiments are configuration, not code edits

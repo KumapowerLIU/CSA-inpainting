@@ -4,7 +4,13 @@ from contextlib import contextmanager
 import pytest
 import torch
 
-from csa_inpainting.engine import Trainer, load_checkpoint, load_generator
+from csa_inpainting.engine import TRAINING_SEMANTICS, Trainer, load_checkpoint, load_generator
+
+
+def test_joint_trainer_rejects_stage1_lpips_setting(tiny_config):
+    tiny_config.train.lpips_weight = 0.1
+    with pytest.raises(ValueError, match="requires Stage1Trainer or Stage2Trainer"):
+        Trainer(tiny_config, test_fixture=True)
 
 
 def test_training_updates_both_stages_and_discriminators(tiny_config, batch):
@@ -20,6 +26,17 @@ def test_training_updates_both_stages_and_discriminators(tiny_config, batch):
     assert all(math.isfinite(value) for value in result.values())
     for old, module in zip(before, modules, strict=True):
         assert not torch.equal(old, next(module.parameters()))
+
+    def optimizer_parameters(optimizer):
+        return {id(p) for group in optimizer.param_groups for p in group["params"]}
+
+    assert optimizer_parameters(trainer.p_optimizer) == {
+        id(p) for p in trainer.generator.rough.parameters()
+    }
+    assert optimizer_parameters(trainer.g_optimizer) == {
+        id(p) for p in trainer.generator.refine.parameters()
+    }
+    assert trainer.g_optimizer.state and trainer.p_optimizer.state
 
 
 def test_checkpoint_exact_next_step(tmp_path, tiny_config, batch):
@@ -37,14 +54,49 @@ def test_checkpoint_exact_next_step(tmp_path, tiny_config, batch):
         torch.testing.assert_close(value, restored.generator.state_dict()[key], atol=0, rtol=0)
     assert restored.global_step == 2 and restored.completed_epochs == 1
     assert restored.g_scheduler.state_dict() == trainer.g_scheduler.state_dict()
+    assert restored.p_scheduler.state_dict() == trainer.p_scheduler.state_dict()
+    for name in ("g_optimizer", "p_optimizer", "d_optimizer"):
+        torch.testing.assert_close(
+            getattr(restored, name).state_dict(),
+            getattr(trainer, name).state_dict(),
+            atol=0,
+            rtol=0,
+        )
     model, config = load_generator(path, torch.device("cpu"))
     assert config.model == tiny_config.model
     assert not model.training
     assert load_checkpoint(path)["test_fixture"] is True
+    assert load_checkpoint(path)["format_version"] == 2
+    assert load_checkpoint(path)["training_semantics"] == TRAINING_SEMANTICS
     tiny_config.train.lr *= 2
     incompatible = Trainer(tiny_config, test_fixture=True, restoring=True)
     with pytest.raises(ValueError, match="Resume config differs"):
         incompatible.restore(path)
+
+
+@pytest.mark.parametrize("mismatch", ["old_version", "missing_semantics", "wrong_semantics"])
+def test_checkpoint_training_semantics_must_match(tmp_path, tiny_config, batch, mismatch):
+    trainer = Trainer(tiny_config, test_fixture=True)
+    path = tmp_path / "incompatible.pt"
+    trainer.save(path)
+    state = load_checkpoint(path)
+    if mismatch == "old_version":
+        state["format_version"] = 1
+        for key in ("training_semantics", "p_optimizer", "p_scheduler"):
+            state.pop(key)
+    elif mismatch == "missing_semantics":
+        state.pop("training_semantics")
+    else:
+        state["training_semantics"] = "joint_gradients"
+    torch.save(state, path)
+    # Detach only changes backward: old modern weights still support inference.
+    loaded, _ = load_generator(path, torch.device("cpu"))
+    with torch.inference_mode():
+        torch.testing.assert_close(loaded(*batch).completed, trainer.generator(*batch).completed)
+    with pytest.raises(ValueError, match="training semantics differ"):
+        trainer.restore(path)
+    with pytest.raises(RuntimeError, match="awaiting a successful restore"):
+        trainer.step(*batch)
 
 
 def test_real_training_rejects_tiny_features(tiny_config):
@@ -96,7 +148,13 @@ def test_random_vgg_diagnostic_is_explicit_in_checkpoint(tmp_path, tiny_config, 
         return TinyFeatures(512)
 
     monkeypatch.setattr(engine, "VGGFeatures", vgg)
-    monkeypatch.setattr(engine, "InpaintingModel", lambda **kwargs: torch.nn.Conv2d(3, 3, 1))
+    monkeypatch.setattr(
+        engine,
+        "InpaintingModel",
+        lambda **kwargs: torch.nn.ModuleDict(
+            {"rough": torch.nn.Conv2d(3, 3, 1), "refine": torch.nn.Conv2d(3, 3, 1)}
+        ),
+    )
     Trainer(tiny_config)
     assert observed == [True]
     diagnostic = Trainer(tiny_config, diagnostic="random_vgg")

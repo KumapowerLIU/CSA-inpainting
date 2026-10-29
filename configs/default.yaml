@@ -9,7 +9,9 @@ data:
   val_images: ""
   train_masks: ""
   val_masks: ""
-  mask_mode: center  # center | files | brush (synthetic, not the paper benchmark)
+  mask_mode: random  # random | center | files | brush; generated masks are synthetic
+  random_min_fraction: 0.1  # random rectangles/strokes: 10%-40% missing area
+  random_max_fraction: 0.4
   mask_white_is_hole: true
   image_size: 256
   center_overlap: 4  # released notebook: 120x120 hole; set 0 for 128x128
@@ -26,6 +28,9 @@ train:
   beta1: 0.5
   beta2: 0.999
   reconstruction_weight: 1.0
+  lpips_weight: 0.0  # keep 0 for joint csa train; staged runners support LPIPS
+  lpips_net: vgg
+  lpips_batch_size: 8  # FP32 perceptual chunks; independent of optimizer batch size
   consistency_weight: 0.01
   adversarial_weight: 0.002
   discriminator_width: 64
