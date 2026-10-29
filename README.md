@@ -76,17 +76,6 @@ Inference needs only the portable checkpoint: no discriminator, VGG, LPIPS, or p
 
 Training and CUDA execution have been exercised in the staged training runs. The release preserves the stage-2 architecture and output semantics of the paused step-97,397 checkpoint. The [checkpoint card](docs/releases/step97397/README.md) records its provenance, checksums, validation, and limitations.
 
-### A small, inspectable evaluation
-
-The table below is a **fixed 64-image local validation spot-check**, evaluated in FP32 with batch size 1 and identical masks for both outputs. It is not a standard public benchmark or a reproduction of the paper's results. Metrics are averaged per image; hole errors use RGB values in `[0,1]`, and SSIM is computed over the completed full image.
-
-| Output at step 97,397 | Hole PSNR ↑ | Hole L1 ↓ | Full-image SSIM ↑ |
-|---|---:|---:|---:|
-| Frozen rough model (stage 1, step 156,181) | 18.4163 dB | 0.083474 | 0.863315 |
-| CSA refinement | 18.1563 dB | 0.083444 | 0.867322 |
-
-Refinement does not improve every metric or every image. Missing facial structure, long scene geometry, and repeated architectural details remain difficult. The [complete preview](docs/assets/csa-step97397-full.jpg) and [all 64 metric rows](docs/releases/step97397/evaluation.json) make those limits visible.
-
 ## Train and extend
 
 The trained release uses **sequential stages**: train rough prediction first, freeze it, then train CSA refinement and its discriminators. The [training guide](docs/TRAINING.md) documents the indexed-data runner, losses, batch-size probes, and checkpoint resume.
