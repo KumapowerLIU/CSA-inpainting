@@ -22,7 +22,7 @@ This is the selected 2026 training run, rather than the original 2019 paper
 weights. It was selected by visual review, not an automatic best-metric rule.
 Model repository: [KumaPower/CSA](https://huggingface.co/KumaPower/CSA) ·
 [Download the 528.5 MB inference weight](https://huggingface.co/KumaPower/CSA/resolve/main/csa-stage2-step97397.pt) ·
-[Source repository](https://github.com/KumapowerLIU/CSA-inpainting/tree/codex/modern-pytorch).
+[Source repository](https://github.com/KumapowerLIU/CSA-inpainting/tree/master).
 
 ![Selected stage-2 completions at step 97,397](../../assets/csa-step97397.jpg)
 

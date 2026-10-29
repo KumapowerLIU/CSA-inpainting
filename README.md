@@ -43,7 +43,7 @@ This branch updates the 2019 implementation and training recipe. See [what chang
 **Verified Linux/NVIDIA environment:** Python 3.10.14 · PyTorch 2.6.0 · torchvision 0.21.0 · CUDA 12.4. The [official wheel pairing](https://pytorch.org/get-started/previous-versions/#v260) below requires a compatible NVIDIA driver, with no separate CUDA toolkit installation. For CPU, macOS, and other CUDA builds, see [installation and devices](docs/USAGE.md#installation-and-devices).
 
 ```bash
-git clone --branch codex/modern-pytorch https://github.com/KumapowerLIU/CSA-inpainting.git
+git clone --branch master https://github.com/KumapowerLIU/CSA-inpainting.git
 cd CSA-inpainting
 python3.10 -m venv .venv
 source .venv/bin/activate
@@ -147,7 +147,7 @@ The older `csa train` command uses a separate joint-training loop. For this rele
 
 ## Paper, history, and license
 
-The original ICCV 2019 implementation is preserved in [`legacy/`](legacy/) and the [historical revision](https://github.com/KumapowerLIU/CSA-inpainting/tree/f0b0712aa950cc559062dfef04c2f3f884a1f3e2).
+The original ICCV 2019 implementation is preserved on the [`codex/legacy-master` branch](https://github.com/KumapowerLIU/CSA-inpainting/tree/codex/legacy-master) and in [`legacy/`](legacy/).
 
 ```bibtex
 @InProceedings{Liu_2019_ICCV,

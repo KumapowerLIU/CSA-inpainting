@@ -17,7 +17,7 @@ The indexed runner requires **CUDA**. Despite its directory name, it is an ordin
 Use Python 3.10+ on the CUDA machine. If you already have this checkout and a suitable environment, start at the install command:
 
 ```bash
-git clone --branch codex/modern-pytorch https://github.com/KumapowerLIU/CSA-inpainting.git
+git clone --branch master https://github.com/KumapowerLIU/CSA-inpainting.git
 cd CSA-inpainting
 python3 -m venv .venv
 source .venv/bin/activate
