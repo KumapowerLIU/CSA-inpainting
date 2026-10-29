@@ -195,11 +195,18 @@ LPIPS/VGG activation chunks bound memory; `--lpips-batch-size` is not the optimi
 | Setting | Stage 1 LPIPS phase | Released stage 2 |
 |---|---|---|
 | Optimizer batch | 256 | 192 |
-| GPU / precision | One H100 / BF16 | One H100 / BF16 |
+| GPU | 1 × NVIDIA H100 80GB HBM3 | 1 × NVIDIA H100 80GB HBM3 |
+| GPU memory capacity | 80 GB | 80 GB |
+| Precision | BF16 mixed precision | BF16 mixed precision |
 | Image resolution | 256 × 256 | 256 × 256 |
 | DataLoader workers | 32 | 32 |
 | LPIPS activation chunk | 8 | 8 |
 | Selected checkpoint step | 156,181 | 97,397 |
+| Observed PyTorch peak allocated | 9.15 GiB | 31.18 GiB |
+| Observed PyTorch peak reserved | 12.08 GiB | 34.42 GiB |
+| Memory measurement scope | Production-training snapshot, 2026-10-23 | Two-update PatchGAN + face-mixture probe, 2026-10-27 |
+
+The 80 GB figure is physical card capacity. The observed peaks are historical PyTorch allocator measurements from the stated scopes, not a full-run hardware minimum. Reserved memory includes the allocator cache; CUDA context and driver allocations can add to the process memory shown by `nvidia-smi`.
 
 Use these batch sizes only after a successful probe on your available memory; they are recorded settings, not minimum requirements. Keep `--lpips-batch-size 8` when increasing `--batch-size` if you want the same activation chunk bound. No distributed launch or gradient accumulation is needed for the documented single-GPU workflow.
 

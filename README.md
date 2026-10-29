@@ -84,7 +84,21 @@ The trained release uses **sequential stages**: train rough prediction first, fr
 2. Put complete RGB images in separate train/validation folders, then follow the [runtime and index preparation](docs/TRAINING.md#prepare-independent-runtimes).
 3. Run [stage 1](docs/TRAINING.md#stage-1-rough-reconstruction), select its checkpoint on held-out images, then run [stage 2](docs/TRAINING.md#stage-2-csa-refinement) with that frozen parent.
 
-Both stages use **L1 = 0.1 and LPIPS = 1** in the documented fresh-training recipe. Stage 2 adds CSA consistency and the original image/feature PatchGAN losses. Masks are generated online, with 10–40% missing area; no mask dataset is needed. The guide starts at batch 8 and includes a memory probe. The recorded runs used batch 256 for the stage-1 LPIPS phase and 192 for stage 2 on one H100.
+Both stages use **L1 = 0.1 and LPIPS = 1** in the documented fresh-training recipe. Stage 2 adds CSA consistency and the original image/feature PatchGAN losses. Masks are generated online, with 10–40% missing area; no mask dataset is needed.
+
+### Training hardware and batch size
+
+| Setting | Stage 1 LPIPS phase | Stage 2 refinement |
+|---|---|---|
+| GPU | 1 × NVIDIA H100 80GB HBM3 | 1 × NVIDIA H100 80GB HBM3 |
+| GPU memory capacity | 80 GB | 80 GB |
+| Optimizer batch size | 256 | 192 |
+| Precision | BF16 mixed precision | BF16 mixed precision |
+| Image resolution | 256 × 256 | 256 × 256 |
+| LPIPS activation chunk | 8 images | 8 images |
+| Observed PyTorch peak allocated / reserved | 9.15 / 12.08 GiB, training snapshot | 31.18 / 34.42 GiB, two-update probe |
+
+The stages run sequentially on a single GPU. **80 GB is the card's capacity**, while the last row reports historical usage measurements. PyTorch reserved memory includes its allocator cache and does not include every CUDA/driver allocation. LPIPS chunk size 8 controls perceptual-network memory; it is separate from the optimizer batch size. The [training guide](docs/TRAINING.md#released-run-versus-a-fresh-experiment) starts at batch 8 and provides a memory probe for choosing a batch on your own hardware.
 
 ### Training data and where to find it
 
