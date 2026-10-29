@@ -24,7 +24,7 @@ source .venv/bin/activate
 python -m pip install --upgrade pip
 ```
 
-Install a matching CUDA PyTorch/torchvision pair using the [official installer](https://pytorch.org/get-started/locally/), within the supported ranges of PyTorch `>=2.6,<3` and torchvision `>=0.21,<1`. Then install the training dependencies and check the selected device:
+Install the [verified PyTorch 2.6.0 / torchvision 0.21.0 / CUDA 12.4 pairing](../README.md#1-install), or choose a matching pair from the [official installer](https://pytorch.org/get-started/locally/) within the supported ranges of PyTorch `>=2.6,<3` and torchvision `>=0.21,<1`. Then install the training dependencies and check the selected device:
 
 ```bash
 python -m pip install -e '.[perceptual]'

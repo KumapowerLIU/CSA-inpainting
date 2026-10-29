@@ -4,6 +4,8 @@ For the trained release, start with the [README quickstart](../README.md#try-the
 
 ## Installation and devices
 
+For a pinned Linux/NVIDIA setup, use the [README installation recipe](../README.md#1-install). The production runtime was checked with Python 3.10.14, PyTorch 2.6.0+cu124, and torchvision 0.21.0+cu124; package imports and torchvision's compiled CPU operators were also verified. These wheels include the CUDA 12.4 runtime and require a compatible NVIDIA driver, without a separate CUDA toolkit installation.
+
 Use Python 3.10+ and a matching PyTorch/torchvision pair within the package's supported ranges: PyTorch `>=2.6,<3`, torchvision `>=0.21,<1`. Choose the appropriate CPU or CUDA wheels from the [official installer](https://pytorch.org/get-started/locally/), then:
 
 ```bash

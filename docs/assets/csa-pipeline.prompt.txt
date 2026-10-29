@@ -1,0 +1,27 @@
+CSA pipeline illustration
+Generated with the built-in image_gen tool. Schematic reviewed against the modern Stage2InpaintingModel forward path.
+No generated imagery is used as restoration-quality evidence.
+
+Final generation prompt:
+Use case: infographic-diagram.
+Asset type: a polished scientific pipeline illustration for the author's CSA image-inpainting GitHub README.
+Create one wide landscape figure, approximately 2.4:1 aspect ratio, with a clean off-white background, generous whitespace, fine slate lines, restrained teal and blue accents, elegant flat academic-editorial design, crisp readable sans-serif English lettering. Large labels must remain readable when shown at 960 pixels wide. No photos or realistic output examples: use only abstract image tiles, network blocks and arrows. No logo, watermark, perspective, 3D decoration, performance metrics or equations.
+
+Small title at top-left: "Coherent Semantic Attention".
+Main diagram is exactly five ordered nodes in a single left-to-right row, with a clear arrow between each:
+1. "Masked image" — abstract neutral image tile with a missing region.
+2. "Rough U-Net" — a blue network block.
+3. "Coarse composite" — abstract tile, subtitle "Keep known pixels".
+4. "CSA refinement" — a teal network block with a small internal label "Coherent semantic attention".
+5. "Final composite" — abstract tile, subtitle "Keep known pixels".
+
+Below the main row, show one clearly separated bypass arrow from the Masked image node to the CSA refinement node, labelled "Masked input". This is essential: refinement receives both the coarse composite and the masked input. Do not draw it to the final output.
+Under the diagram, a small black-and-white mask tile and legend read exactly: "Mask: white = hole" and "Guides attention and compositing". This is a legend; no confusing extra wires are needed. The mask is not a trainable network. Coarse and final compositing reuse the original known pixels.
+
+Place a small badge immediately above Rough U-Net: "Stage 1". Place a small badge immediately above CSA refinement: "Stage 2".
+At the bottom, two balanced, understated training-note panels:
+Left panel title "1  Train rough"; body "L1 + LPIPS".
+Right panel title "2  Freeze rough; train refinement"; body "L1 + LPIPS + consistency + GAN".
+A small label above those two panels reads "Sequential training". The bottom panels are explanatory notes, not additional steps in the inference path. GAN is training supervision only; no discriminator appears in the inference flow.
+
+Scientific accuracy constraints: Stage 1 is separately trained first. Stage 2 freezes the rough network, composites its prediction with known input pixels, and refines using CSA. The final output retains known input pixels exactly. The schematic illustrates this modern implementation, not a reproduced original paper figure. Keep all provided text spelled exactly, with no extra claims. Make the overall result beautiful, calm, visually balanced and publication-quality.
