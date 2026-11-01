@@ -26,9 +26,7 @@ Model repository: [KumaPower/CSA](https://huggingface.co/KumaPower/CSA) ·
 
 ![Selected stage-2 completions at step 97,397](../../assets/csa-step97397.jpg)
 
-Columns: masked input, restored image, original. See the
-[full eight-case gallery](../../assets/csa-step97397-full.jpg) for additional
-examples, including faces and structures that the model does not reconstruct well.
+Selected examples. Columns: masked input, restored image, original.
 
 ## Model at a glance
 
@@ -90,8 +88,8 @@ PSNR is lower than the frozen rough model. The machine-readable report is
 
 Natural backgrounds and smooth regions are useful qualitative examples. Large
 holes over faces, buildings, and missing semantic objects can still produce
-blur, incorrect geometry, or repeated texture. The full gallery includes these
-failure cases; inpainting is a plausible completion, not a recovery guarantee.
+blur, incorrect geometry, or repeated texture. Inpainting is a plausible
+completion, not a recovery guarantee.
 
 ## Files and inference
 

@@ -20,7 +20,7 @@
 <img src="docs/assets/csa-step97397.jpg" alt="Actual step 97,397 inference: masked input, restored image, and original image, shown for three selected examples." width="960">
 
 <p><sub>Actual inference from the modern stage-2 checkpoint at step 97,397. Columns: masked input · restored · original.<br>
-Selected examples; <a href="docs/assets/csa-step97397-full.jpg">view all eight preview cases, including failures</a>.</sub></p>
+Selected examples.</sub></p>
 
 </div>
 

@@ -54,7 +54,7 @@ published at [KumaPower/CSA](https://huggingface.co/KumaPower/CSA).
 ## Qualitative and metric evidence
 
 The [64-image report](releases/step97397/evaluation.json) and
-[eight-case gallery](assets/csa-step97397-full.jpg) use the selected 97,397-step
+[selected preview](assets/csa-step97397.jpg) use the selected 97,397-step
 checkpoint. This is a fixed internal spot check, not an official paper benchmark.
 Faces and repeated scene geometry remain difficult. No original-2019 checkpoint
 converter, matched paper reproduction, arbitrary-resolution quality claim, or

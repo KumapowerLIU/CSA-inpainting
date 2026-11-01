@@ -13,5 +13,5 @@ csa infer --checkpoint checkpoints/csa-stage2-step97397.pt \
 
 The reference was generated on an H100 with FP32 inference. Floating-point
 differences across devices or PyTorch versions can affect final quantization.
-Known pixels are composited from the input. Evaluation details and all eight
-displayed cases are in [the release notes](../docs/releases/step97397/README.md).
+Known pixels are composited from the input. Evaluation details and selected
+examples are in [the release notes](../docs/releases/step97397/README.md).
