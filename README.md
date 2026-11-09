@@ -11,6 +11,7 @@
 <p>
   <a href="https://openaccess.thecvf.com/content_ICCV_2019/html/Liu_Coherent_Semantic_Attention_for_Image_Inpainting_ICCV_2019_paper.html">Paper</a> ·
   <a href="#how-it-works">Method</a> ·
+  <a href="https://huggingface.co/spaces/KumaPower/CSA-Inpainting-Studio">Live demo</a> ·
   <a href="#try-the-checkpoint">Quickstart</a> ·
   <a href="https://huggingface.co/KumaPower/CSA">Hugging Face</a> ·
   <a href="docs/TRAINING.md">Training</a> ·
@@ -27,6 +28,15 @@ Selected examples.</sub></p>
 The author's PyTorch implementation of **Coherent Semantic Attention (CSA)**, with separate training stages, random masks, and a ready-to-use checkpoint. The modern release uses **L1 + LPIPS** and the original **image and feature PatchGANs**.
 
 This branch updates the 2019 implementation and training recipe. See [what changed](docs/MIGRATION.md) and the [checkpoint card](docs/releases/step97397/README.md) for its relationship to the paper.
+
+## Interactive demo
+
+[**Open CSA Inpainting Studio on Hugging Face**](https://huggingface.co/spaces/KumaPower/CSA-Inpainting-Studio)
+
+1. Upload an RGB image and paint the area to fill, or upload a binary mask (white fills, black keeps). To use a ready-made pair, select a thumbnail in **Try a sample** below the workspace.
+2. Click **Compare both stages** to see the rough reconstruction and CSA refinement on the same input. View them side by side or use the wipe slider, then download either result as a PNG.
+
+The studio runs the released checkpoint at **256 × 256** and preserves the unmasked pixels of the resized input.
 
 ## How it works
 
